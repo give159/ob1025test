@@ -1,0 +1,346 @@
+"""
+社員管理システム - 詳細コメント版
+
+各行に詳細なコメントを追加した解説版です。
+"""
+
+# typing モジュールから List 型をインポート（型ヒントで使用）
+from typing import List
+# functools モジュールから wraps デコレータをインポート（デコレータ作成で使用）
+from functools import wraps
+
+
+# ============================================================
+# Employeeクラス（基底クラス）
+# ============================================================
+class Employee:
+    """社員の基底クラス - すべての社員タイプの親クラス"""
+    
+    def __init__(self):
+        """
+        コンストラクタ（初期化メソッド）
+        インスタンスが作成されるときに自動的に呼ばれる
+        """
+        # プライベート変数 _name を空文字列で初期化
+        # アンダースコアで始まる変数名は慣例的にプライベート変数を示す
+        self._name: str = ""
+        
+        # プライベート変数 _salary を 0 で初期化
+        # int 型であることを型ヒントで明示
+        self._salary: int = 0
+    
+    def get_name(self) -> str:
+        """
+        ゲッター: 社員の名前を取得する
+        -> str は戻り値が str 型であることを示す型ヒント
+        """
+        # プライベート変数 _name の値を返す
+        return self._name
+    
+    def set_name(self, emp_name: str) -> None:
+        """
+        セッター: 社員の名前を設定する
+        emp_name: str は引数が str 型であることを示す型ヒント
+        -> None は戻り値がないことを示す
+        """
+        # 引数で受け取った名前をプライベート変数に代入
+        self._name = emp_name
+    
+    def get_salary(self) -> int:
+        """ゲッター: 社員の給料を取得する"""
+        # プライベート変数 _salary の値を返す
+        return self._salary
+    
+    def set_salary(self, emp_salary: int) -> None:
+        """セッター: 社員の給料を設定する"""
+        # 引数で受け取った給料をプライベート変数に代入
+        self._salary = emp_salary
+    
+    def __del__(self):
+        """
+        デストラクタ（破壊メソッド）
+        インスタンスがメモリから削除される直前に自動的に呼ばれる
+        __del__ は特殊メソッド（マジックメソッド）の一つ
+        """
+        # デストラクタが呼ばれたことを表示（デバッグ用）
+        print(f"[デストラクタ] Employeeインスタンス '{self._name}' が削除されました")
+
+
+# ============================================================
+# Staffクラス（一般社員）
+# ============================================================
+class Staff(Employee):
+    """
+    一般社員クラス
+    (Employee) は Employee クラスを継承することを示す
+    """
+    
+    def __init__(self):
+        """コンストラクタ"""
+        # super() で親クラス（Employee）のコンストラクタを呼び出す
+        # これにより _name と _salary が初期化される
+        super().__init__()
+        
+        # Staff 固有の属性：所属部署を初期化
+        self._division: str = ""
+    
+    def get_division(self) -> str:
+        """ゲッター: 所属部署を取得する"""
+        # プライベート変数 _division の値を返す
+        return self._division
+    
+    def set_division(self, emp_division: str) -> None:
+        """セッター: 所属部署を設定する"""
+        # 引数で受け取った部署名をプライベート変数に代入
+        self._division = emp_division
+    
+    def __del__(self):
+        """デストラクタ"""
+        # Staff インスタンスが削除されることを表示
+        print(f"[デストラクタ] Staffインスタンス '{self._name}' が削除されました")
+
+
+# ============================================================
+# Presidentクラス（社長）
+# ============================================================
+class President(Employee):
+    """
+    社長クラス
+    Employee を継承し、会社への参照を持つ
+    """
+    
+    def __init__(self, company: 'Company'):
+        """
+        コンストラクタ
+        company: 'Company' の 'Company' はフォワード参照（前方参照）
+        クラス定義より前に型ヒントで使うため文字列で指定
+        """
+        # 親クラスのコンストラクタを呼び出す
+        super().__init__()
+        
+        # 会社インスタンスへの参照を保存
+        # これにより社長は会社の情報にアクセスできる
+        self._company: 'Company' = company
+    
+    def get_name(self) -> str:
+        """
+        ゲッター: 社長の名前を取得する（オーバーライド）
+        親クラスのメソッドを上書きして、独自の動作を実装
+        """
+        # 名前の末尾に「社長」という肩書きを追加して返す
+        return self._name + "社長"
+    
+    def dismiss(self, name: str) -> None:
+        """
+        社員を解雇するメソッド
+        引数 name: 解雇する社員の名前
+        """
+        # リスト内包表記を使って、指定された名前以外の社員だけを残す
+        # [条件を満たす要素 for 要素 in リスト if 条件]
+        self._company._staffs = [
+            staff for staff in self._company._staffs 
+            if staff.get_name() != name  # 名前が一致しない社員だけを残す
+        ]
+        # 解雇通知を表示
+        print(f"[解雇通知] {name}さんを解雇しました")
+    
+    def __del__(self):
+        """デストラクタ"""
+        # President インスタンスが削除されることを表示
+        print(f"[デストラクタ] Presidentインスタンス '{self._name}' が削除されました")
+
+
+# ============================================================
+# デコレータ関数
+# ============================================================
+def print_employee_count(func):
+    """
+    デコレータ: 関数実行後に社員数を表示する
+    デコレータは関数を引数として受け取り、拡張された関数を返す
+    """
+    # @wraps(func) は元の関数のメタデータ（名前、docstringなど）を保持する
+    @wraps(func)
+    def wrapper(self, *args, **kwargs):
+        """
+        ラッパー関数: 元の関数の前後に処理を追加する
+        *args: 任意の数の位置引数を受け取る
+        **kwargs: 任意の数のキーワード引数を受け取る
+        """
+        # 元の関数を実行して結果を保存
+        result = func(self, *args, **kwargs)
+        
+        # 社員数を計算（一般社員 + 社長1人）
+        # len() 関数でリストの要素数を取得
+        total_employees = len(self._staffs) + 1
+        
+        # 社員数を表示
+        print(f"現在わが社の社員数は{total_employees}人になっています")
+        
+        # 元の関数の戻り値を返す
+        return result
+    
+    # 拡張されたラッパー関数を返す
+    return wrapper
+
+
+# ============================================================
+# Companyクラス（会社）
+# ============================================================
+class Company:
+    """会社クラス: 社員と社長を管理する"""
+    
+    def __init__(self):
+        """コンストラクタ"""
+        # 社員リストを空のリストで初期化
+        # List[Staff] は Staff オブジェクトのリストであることを示す型ヒント
+        self._staffs: List[Staff] = []
+        
+        # 社長インスタンスを作成
+        # 引数に self（この会社インスタンス）を渡すことで、
+        # 社長が会社にアクセスできるようにする
+        self._ceo: President = President(self)
+    
+    @property
+    def staffs(self) -> List[Staff]:
+        """
+        プロパティ: 社員リストのゲッター
+        @property デコレータを使うと、メソッドを属性のように使える
+        company.staffs() ではなく company.staffs でアクセス可能
+        """
+        # プライベート変数 _staffs を返す
+        return self._staffs
+    
+    @property
+    def ceo(self) -> President:
+        """プロパティ: 社長のゲッター"""
+        # プライベート変数 _ceo を返す
+        return self._ceo
+    
+    @print_employee_count
+    def set_dismissal_procedure(self, name: str) -> None:
+        """
+        解雇手続きを実行するメソッド
+        @print_employee_count デコレータにより、実行後に社員数が表示される
+        """
+        # 指定された名前以外の社員だけを残す（リスト内包表記）
+        self._staffs = [
+            staff for staff in self._staffs 
+            if staff.get_name() != name
+        ]
+        # 解雇手続き完了のメッセージを表示
+        print(f"[解雇手続き完了] {name}さんの解雇手続きが完了しました")
+    
+    def __del__(self):
+        """デストラクタ"""
+        # Company インスタンスが削除されることを表示
+        print("[デストラクタ] Companyインスタンスが削除されました")
+
+
+# ============================================================
+# メイン関数（テスト実行）
+# ============================================================
+def main():
+    """メイン関数: プログラムの実行内容を定義"""
+    # 区切り線を表示（"=" を 60 個繰り返す）
+    print("=" * 60)
+    print("社員管理システム テスト開始")
+    print("=" * 60)
+    # 空行を出力
+    print()
+    
+    # Company クラスのインスタンスを作成
+    company = Company()
+    
+    # === 社員1の作成と登録 ===
+    # Staff クラスのインスタンスを作成
+    staff1 = Staff()
+    # セッターメソッドで名前を設定
+    staff1.set_name("佐藤太郎")
+    # セッターメソッドで給料を設定
+    staff1.set_salary(200000)
+    # セッターメソッドで所属部署を設定
+    staff1.set_division("営業部")
+    # プロパティを使って社員リストに追加
+    # append() はリストの末尾に要素を追加するメソッド
+    company.staffs.append(staff1)
+    
+    # === 社員2の作成と登録 ===
+    staff2 = Staff()
+    staff2.set_name("鈴木次郎")
+    staff2.set_salary(300000)
+    staff2.set_division("開発部")
+    company.staffs.append(staff2)
+    
+    # === 社長の情報設定 ===
+    # プロパティを使って社長インスタンスにアクセス
+    company.ceo.set_name("偉井杉人")
+    company.ceo.set_salary(2500000)
+    
+    # === 社員情報の出力 ===
+    print("【社員一覧】")
+    # for ループで社員リストを順に処理
+    for staff in company.staffs:
+        # f-string（フォーマット文字列）で情報を整形して表示
+        print(f"名前：{staff.get_name()}、給料：{staff.get_salary()}円、所属：{staff.get_division()}")
+    
+    print()
+    print("【社長情報】")
+    # 社長の情報を表示（get_name() は "偉井杉人社長" を返す）
+    print(f"名前：{company.ceo.get_name()}、給料：{company.ceo.get_salary()}円")
+    
+    print()
+    print("=" * 60)
+    print("追加機能テスト")
+    print("=" * 60)
+    print()
+    
+    # === dismissメソッドのテスト ===
+    print("【社長によるdismissメソッドテスト】")
+    # len() 関数でリストの要素数を取得
+    print(f"解雇前の社員数: {len(company.staffs)}人")
+    # 社長の dismiss メソッドを呼び出して佐藤太郎を解雇
+    company.ceo.dismiss("佐藤太郎")
+    print(f"解雇後の社員数: {len(company.staffs)}人")
+    print()
+    
+    # === 佐藤太郎の再雇用 ===
+    staff3 = Staff()
+    staff3.set_name("佐藤太郎")
+    staff3.set_salary(200000)
+    staff3.set_division("営業部")
+    company.staffs.append(staff3)
+    print(f"佐藤太郎を再雇用しました（現在の社員数: {len(company.staffs)}人）")
+    print()
+    
+    # === デコレータ付きメソッドのテスト ===
+    print("【デコレータ付きset_dismissal_procedureメソッドテスト】")
+    # このメソッド実行後、デコレータにより社員数が自動表示される
+    company.set_dismissal_procedure("鈴木次郎")
+    print()
+    
+    # === 最終的な社員一覧を表示 ===
+    print("【最終的な社員一覧】")
+    for staff in company.staffs:
+        print(f"名前：{staff.get_name()}、給料：{staff.get_salary()}円、所属：{staff.get_division()}")
+    print()
+    print(f"社長：{company.ceo.get_name()}")
+    
+    print()
+    print("=" * 60)
+    print("デストラクタのテスト（プログラム終了時に表示されます）")
+    print("=" * 60)
+
+
+# ============================================================
+# プログラムのエントリーポイント
+# ============================================================
+# if __name__ == "__main__": は、このファイルが直接実行されたときのみ
+# 以下のコードを実行するという意味（他のファイルからインポートされた場合は実行されない）
+if __name__ == "__main__":
+    # main 関数を呼び出してプログラムを実行
+    main()
+    # プログラム終了メッセージを表示
+    # \n は改行を表すエスケープシーケンス
+    print("\n[プログラム終了 - デストラクタが呼ばれます]")
+    # この後、Python のガベージコレクタがインスタンスを削除し、
+    # 各クラスの __del__ メソッド（デストラクタ）が呼ばれる
