@@ -1,0 +1,687 @@
+# 新人エンジニアのためのPython実践ガイド
+## 社員管理システムで学ぶオブジェクト指向とテスト駆動開発
+
+---
+
+## はじめに
+
+このガイドでは、実際の業務で使える**オブジェクト指向プログラミング**と**テスト駆動開発**の基礎を、社員管理システムを通じて学びます。単なる文法解説ではなく、「なぜそう書くのか」「実務でどう使うのか」を重視した実践的な内容です。
+
+---
+
+## 目次
+
+1. [プロジェクト構成の基本](#1-プロジェクト構成の基本)
+2. [型ヒントで保守性を高める](#2-型ヒントで保守性を高める)
+3. [クラス設計の3つの原則](#3-クラス設計の3つの原則)
+4. [継承とオーバーライド](#4-継承とオーバーライド)
+5. [デコレータで機能を拡張する](#5-デコレータで機能を拡張する)
+6. [プロパティで安全なアクセス](#6-プロパティで安全なアクセス)
+7. [テスト駆動開発の実践](#7-テスト駆動開発の実践)
+8. [リファクタリングのポイント](#8-リファクタリングのポイント)
+
+---
+
+## 1. プロジェクト構成の基本
+
+### なぜファイルを分けるのか？
+
+**良い例：モジュール分割**
+```
+project/
+├── models/
+│   ├── employee.py      # 基底クラス
+│   ├── staff.py         # 一般社員
+│   └── president.py     # 社長
+├── services/
+│   └── company.py       # ビジネスロジック
+├── tests/
+│   └── test_company.py  # テストコード
+└── main.py              # エントリーポイント
+```
+
+**メリット：**
+- **責任の分離**: 1ファイル1クラスで役割が明確
+- **再利用性**: 必要なクラスだけインポート可能
+- **チーム開発**: 同時編集による競合を防ぐ
+- **テストしやすい**: 個別にテストできる
+
+### import文の書き方
+
+```python
+# 標準ライブラリ
+import sys
+from typing import List
+
+# 外部ライブラリ
+import requests
+
+# 自作モジュール
+from models.employee import Employee
+from services.company import Company
+```
+
+**ポイント：**
+- グループごとに空行で区切る
+- 標準ライブラリ → 外部 → 自作の順
+- `from X import Y` は具体的に指定
+
+---
+
+## 2. 型ヒントで保守性を高める
+
+### 型ヒントとは？
+
+Python 3.5以降で導入された、変数や関数の型を明示する機能です。
+
+**型ヒントなし（読みにくい）**
+```python
+def calculate_bonus(salary, rate):
+    return salary * rate
+```
+
+**型ヒント付き（分かりやすい）**
+```python
+def calculate_bonus(salary: int, rate: float) -> int:
+    """
+    ボーナスを計算する
+    
+    Args:
+        salary: 月給（円）
+        rate: ボーナス係数（例: 2.5ヶ月分）
+    
+    Returns:
+        ボーナス額（円）
+    """
+    return int(salary * rate)
+```
+
+### 型ヒントの書き方
+
+```python
+# 基本型
+name: str = "太郎"
+age: int = 25
+salary: float = 250000.0
+is_active: bool = True
+
+# リスト型
+employees: List[str] = ["太郎", "花子"]
+
+# 辞書型
+from typing import Dict
+scores: Dict[str, int] = {"太郎": 85, "花子": 92}
+
+# Optional型（Noneの可能性）
+from typing import Optional
+manager: Optional[str] = None
+
+# 関数の型ヒント
+def get_name() -> str:
+    return self._name
+
+def set_salary(amount: int) -> None:
+    self._salary = amount
+```
+
+**実務での効果：**
+- IDEの補完が効く（開発速度UP）
+- バグを事前に検出（mypy等のツール）
+- ドキュメント代わりになる
+
+---
+
+## 3. クラス設計の3つの原則
+
+### 原則1: カプセル化（情報隠蔽）
+
+**悪い例：外部から直接変更可能**
+```python
+class Employee:
+    def __init__(self):
+        self.name = ""  # public変数
+        self.salary = 0
+
+# 使用例
+emp = Employee()
+emp.salary = -1000000  # マイナス給料！バグの元
+```
+
+**良い例：getter/setterで保護**
+```python
+class Employee:
+    def __init__(self):
+        self._name: str = ""      # protected変数
+        self._salary: int = 0
+    
+    def set_salary(self, amount: int) -> None:
+        if amount < 0:
+            raise ValueError("給料はマイナスにできません")
+        self._salary = amount
+    
+    def get_salary(self) -> int:
+        return self._salary
+```
+
+**Pythonの命名規則：**
+- `name`: public（外部からアクセス可）
+- `_name`: protected（慣例的に内部用）
+- `__name`: private（名前マングリング）
+
+### 原則2: 単一責任の原則（SRP）
+
+1つのクラスは1つの責任だけを持つべき。
+
+**悪い例：責任が多すぎる**
+```python
+class Employee:
+    def calculate_salary(self):
+        pass
+    
+    def save_to_database(self):  # データベース処理
+        pass
+    
+    def send_email(self):  # メール送信
+        pass
+```
+
+**良い例：責任を分離**
+```python
+class Employee:
+    """社員データを管理"""
+    def calculate_salary(self):
+        pass
+
+class EmployeeRepository:
+    """データベース操作を担当"""
+    def save(self, employee: Employee):
+        pass
+
+class NotificationService:
+    """通知機能を担当"""
+    def send_email(self, to: str, message: str):
+        pass
+```
+
+### 原則3: DRY（Don't Repeat Yourself）
+
+同じコードを繰り返さない。
+
+**悪い例：重複コード**
+```python
+# 社員1の処理
+staff1 = Staff()
+staff1.set_name("太郎")
+staff1.set_salary(200000)
+staff1.set_division("営業部")
+
+# 社員2の処理
+staff2 = Staff()
+staff2.set_name("花子")
+staff2.set_salary(250000)
+staff2.set_division("開発部")
+```
+
+**良い例：ファクトリー関数**
+```python
+def create_staff(name: str, salary: int, division: str) -> Staff:
+    """社員インスタンスを作成する共通関数"""
+    staff = Staff()
+    staff.set_name(name)
+    staff.set_salary(salary)
+    staff.set_division(division)
+    return staff
+
+# 使用例
+staff1 = create_staff("太郎", 200000, "営業部")
+staff2 = create_staff("花子", 250000, "開発部")
+```
+
+---
+
+## 4. 継承とオーバーライド
+
+### 継承の基本
+
+継承は「is-a関係」を表現します。
+
+```python
+class Employee:
+    """基底クラス：全社員共通の機能"""
+    def __init__(self):
+        self._name: str = ""
+        self._salary: int = 0
+    
+    def get_name(self) -> str:
+        return self._name
+
+class Staff(Employee):
+    """派生クラス：一般社員特有の機能"""
+    def __init__(self):
+        super().__init__()  # 親のコンストラクタ呼び出し
+        self._division: str = ""
+```
+
+**継承のルール：**
+- `Staff` **is a** `Employee`（社員である）
+- 親クラスのメソッドを全て引き継ぐ
+- `super()`で親クラスの機能を呼び出す
+
+### メソッドのオーバーライド
+
+親クラスのメソッドを上書きして独自の動作を実装。
+
+```python
+class President(Employee):
+    def __init__(self, company: 'Company'):
+        super().__init__()
+        self._company = company
+    
+    def get_name(self) -> str:
+        """オーバーライド：肩書きを追加"""
+        return self._name + "社長"
+```
+
+**使用例：**
+```python
+emp = Employee()
+emp.set_name("田中")
+print(emp.get_name())  # 出力: 田中
+
+pres = President(company)
+pres.set_name("山田")
+print(pres.get_name())  # 出力: 山田社長
+```
+
+**ポイント：**
+- 同じメソッド名で異なる動作（ポリモーフィズム）
+- 親の処理も使いたい場合は`super().method()`
+
+---
+
+## 5. デコレータで機能を拡張する
+
+### デコレータとは？
+
+関数の前後に処理を追加する「ラッパー」の仕組み。
+
+### パターン1: 関数デコレータ
+
+```python
+from functools import wraps
+
+def print_employee_count(func):
+    """社員数を表示するデコレータ"""
+    @wraps(func)
+    def wrapper(self, *args, **kwargs):
+        # 元の関数を実行
+        result = func(self, *args, **kwargs)
+        
+        # 追加処理：社員数を表示
+        total = len(self._staffs) + 1
+        print(f"現在の社員数: {total}人")
+        
+        return result
+    return wrapper
+
+# 使用例
+class Company:
+    @print_employee_count
+    def set_dismissal_procedure(self, name: str) -> None:
+        """解雇手続き（自動で社員数を表示）"""
+        self._staffs = [s for s in self._staffs if s.get_name() != name]
+```
+
+**動作イメージ：**
+```python
+company.set_dismissal_procedure("太郎")
+# ↓ デコレータが自動で追加処理
+# 解雇処理実行
+# "現在の社員数: 3人"  ← 自動表示
+```
+
+### パターン2: プロパティデコレータ
+
+```python
+class Company:
+    def __init__(self):
+        self._staffs: List[Staff] = []
+    
+    @property
+    def staffs(self) -> List[Staff]:
+        """ゲッター：メソッドを属性のように使える"""
+        return self._staffs
+    
+    @staffs.setter
+    def staffs(self, value: List[Staff]) -> None:
+        """セッター：値の検証を追加"""
+        if not isinstance(value, list):
+            raise TypeError("リストを指定してください")
+        self._staffs = value
+```
+
+**使用例：**
+```python
+company = Company()
+
+# プロパティとして使用（()不要）
+print(company.staffs)  # getter呼び出し
+company.staffs = []    # setter呼び出し
+```
+
+### よく使うデコレータ
+
+```python
+# 1. @staticmethod - インスタンス不要
+class Utils:
+    @staticmethod
+    def format_salary(amount: int) -> str:
+        return f"¥{amount:,}"
+
+# 使用例
+print(Utils.format_salary(250000))  # ¥250,000
+
+# 2. @classmethod - クラスメソッド
+class Employee:
+    count = 0
+    
+    @classmethod
+    def increment_count(cls):
+        cls.count += 1
+
+# 3. カスタムデコレータ - 実行時間計測
+import time
+
+def measure_time(func):
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        start = time.time()
+        result = func(*args, **kwargs)
+        end = time.time()
+        print(f"{func.__name__}: {end - start:.3f}秒")
+        return result
+    return wrapper
+```
+
+---
+
+## 6. プロパティで安全なアクセス
+
+### なぜプロパティを使うのか？
+
+**従来の方法：**
+```python
+company._staffs  # 直接アクセス（危険）
+```
+
+**プロパティを使う方法：**
+```python
+company.staffs  # 内部処理を隠蔽（安全）
+```
+
+### 実装パターン
+
+```python
+class Company:
+    def __init__(self):
+        self._staffs: List[Staff] = []
+    
+    @property
+    def staffs(self) -> List[Staff]:
+        """読み取り専用にする場合はgetterのみ"""
+        return self._staffs.copy()  # コピーを返して保護
+    
+    @property
+    def staff_count(self) -> int:
+        """計算結果を返す"""
+        return len(self._staffs)
+    
+    @property
+    def total_salary(self) -> int:
+        """集計処理"""
+        return sum(s.get_salary() for s in self._staffs)
+```
+
+**メリット：**
+- 将来の変更に強い（内部実装を変えても外部に影響なし）
+- 検証ロジックを追加できる
+- 計算結果を属性のように扱える
+
+---
+
+## 7. テスト駆動開発の実践
+
+### テストの基本構造（AAA パターン）
+
+```python
+import unittest
+
+class TestEmployee(unittest.TestCase):
+    def test_set_and_get_name(self):
+        # Arrange（準備）
+        employee = Employee()
+        
+        # Act（実行）
+        employee.set_name("太郎")
+        result = employee.get_name()
+        
+        # Assert（検証）
+        self.assertEqual(result, "太郎")
+```
+
+### よく使うアサーション
+
+```python
+# 等価性
+self.assertEqual(actual, expected)
+self.assertNotEqual(actual, expected)
+
+# 真偽値
+self.assertTrue(condition)
+self.assertFalse(condition)
+
+# None判定
+self.assertIsNone(value)
+self.assertIsNotNone(value)
+
+# 型判定
+self.assertIsInstance(obj, MyClass)
+
+# 例外判定
+with self.assertRaises(ValueError):
+    do_something_invalid()
+
+# コレクション
+self.assertIn(item, collection)
+self.assertListEqual(list1, list2)
+```
+
+### テストの整理術
+
+```python
+class TestCompany(unittest.TestCase):
+    def setUp(self):
+        """各テスト前に実行される共通処理"""
+        self.company = Company()
+        self.staff = self._create_test_staff()
+    
+    def tearDown(self):
+        """各テスト後に実行される後処理"""
+        self.company = None
+    
+    def _create_test_staff(self) -> Staff:
+        """テストデータ作成用のヘルパー関数"""
+        staff = Staff()
+        staff.set_name("テスト太郎")
+        staff.set_salary(200000)
+        return staff
+    
+    def test_add_staff(self):
+        self.company.staffs.append(self.staff)
+        self.assertEqual(len(self.company.staffs), 1)
+```
+
+### テストカバレッジを上げる
+
+```python
+class TestStaff(unittest.TestCase):
+    """境界値テスト"""
+    def test_salary_boundary(self):
+        staff = Staff()
+        
+        # 最小値
+        staff.set_salary(0)
+        self.assertEqual(staff.get_salary(), 0)
+        
+        # 最大値
+        staff.set_salary(10000000)
+        self.assertEqual(staff.get_salary(), 10000000)
+    
+    """異常系テスト"""
+    def test_invalid_salary(self):
+        staff = Staff()
+        
+        # マイナス値
+        with self.assertRaises(ValueError):
+            staff.set_salary(-1000)
+```
+
+---
+
+## 8. リファクタリングのポイント
+
+### ポイント1: マジックナンバーを定数化
+
+**悪い例：**
+```python
+if employee.get_salary() > 500000:
+    print("高給取り")
+```
+
+**良い例：**
+```python
+HIGH_SALARY_THRESHOLD = 500000
+
+if employee.get_salary() > HIGH_SALARY_THRESHOLD:
+    print("高給取り")
+```
+
+### ポイント2: 長いメソッドを分割
+
+**悪い例：100行のメソッド**
+```python
+def process_employee(self, emp):
+    # 50行の処理1
+    # 50行の処理2
+    pass
+```
+
+**良い例：責任ごとに分割**
+```python
+def process_employee(self, emp):
+    self._validate_employee(emp)
+    self._calculate_benefits(emp)
+    self._update_database(emp)
+
+def _validate_employee(self, emp):
+    # 検証処理のみ
+    pass
+```
+
+### ポイント3: リスト内包表記を活用
+
+**悪い例：冗長なループ**
+```python
+active_staffs = []
+for staff in company.staffs:
+    if staff.is_active():
+        active_staffs.append(staff)
+```
+
+**良い例：簡潔に**
+```python
+active_staffs = [s for s in company.staffs if s.is_active()]
+```
+
+### ポイント4: 早期リターン
+
+**悪い例：深いネスト**
+```python
+def validate(self, emp):
+    if emp is not None:
+        if emp.get_name():
+            if emp.get_salary() > 0:
+                return True
+    return False
+```
+
+**良い例：早期リターン**
+```python
+def validate(self, emp):
+    if emp is None:
+        return False
+    if not emp.get_name():
+        return False
+    if emp.get_salary() <= 0:
+        return False
+    return True
+```
+
+---
+
+## 実践課題
+
+このコードを理解したら、以下の機能を自分で実装してみましょう：
+
+### 初級課題
+1. **部署クラスの追加**: 部署ごとに複数の社員を管理
+2. **給料の範囲チェック**: 0円未満や1億円以上を拒否
+3. **年齢属性の追加**: 生年月日から年齢を自動計算
+
+### 中級課題
+4. **昇給機能**: 一定条件で自動昇給
+5. **シリアライズ**: JSON形式で保存・読込
+6. **検索機能**: 名前や部署で社員を検索
+
+### 上級課題
+7. **データベース連携**: SQLiteで永続化
+8. **REST API化**: Flaskで公開
+9. **CI/CD構築**: GitHub Actionsで自動テスト
+
+---
+
+## まとめ
+
+このガイドで学んだこと：
+
+✅ **型ヒント**で可読性向上  
+✅ **カプセル化**でバグを防ぐ  
+✅ **継承**でコードを再利用  
+✅ **デコレータ**で機能を拡張  
+✅ **プロパティ**で安全なアクセス  
+✅ **unittest**でテスト駆動開発  
+✅ **リファクタリング**で保守性向上  
+
+### 次のステップ
+
+- **書籍**: 『Effective Python 第2版』
+- **公式ドキュメント**: https://docs.python.org/ja/3/
+- **型チェック**: mypy を導入してみる
+- **フレームワーク**: Django / FastAPI を学ぶ
+
+---
+
+## 参考資料
+
+- PEP 8（Pythonコーディング規約）
+- PEP 484（型ヒント）
+- unittest公式ドキュメント
+- Design Patterns（GoF）
+
+---
+
+**著者より**  
+このガイドが皆さんのPythonスキル向上の一助となれば幸いです。  
+実際に手を動かして、少しずつ自分のものにしていきましょう！
+
+Happy Coding! 🐍
