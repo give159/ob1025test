@@ -1,0 +1,74 @@
+完成しました！🎉
+
+## 📋 コピペ手順書
+
+上のコードから、**【コピー開始】** と **【コピー終了】** の間をコピーして、各ファイルに貼り付けてください。
+
+### 📝 10個のファイル作成手順
+
+```powershell
+# 1. employee.py を作成
+notepad employee.py
+# → 【コピー開始：ここから下をコピーして employee.py に貼り付け】から
+#    【コピー終了：ここまで employee.py】までをコピペ
+
+# 2. staff.py を作成
+notepad staff.py
+# → staff.py の部分をコピペ
+
+# 3. president.py を作成
+notepad president.py
+# → president.py の部分をコピペ
+
+# 4. company.py を作成
+notepad company.py
+# → company.py の部分をコピペ
+
+# 5. test_employee.py を作成
+notepad test_employee.py
+# → test_employee.py の部分をコピペ
+
+# 6. test_staff.py を作成
+notepad test_staff.py
+# → test_staff.py の部分をコピペ
+
+# 7. test_president.py を作成
+notepad test_president.py
+# → test_president.py の部分をコピペ
+
+# 8. test_company.py を作成
+notepad test_company.py
+# → test_company.py の部分をコピペ
+
+# 9. test_integration.py を作成
+notepad test_integration.py
+# → test_integration.py の部分をコピペ
+
+# 10. run_all_tests.py を作成
+notepad run_all_tests.py
+# → run_all_tests.py の部分をコピペ
+```
+
+### ✅ 確認
+
+```powershell
+dir *.py
+```
+
+10個のファイルが表示されればOK！
+
+### 🚀 実行
+
+```powershell
+# 全テスト実行
+python run_all_tests.py
+
+# または個別に
+python test_employee.py
+python test_staff.py
+python test_president.py
+python test_company.py
+python test_integration.py
+```
+
+これで完璧です！😊
