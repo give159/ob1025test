@@ -1,0 +1,897 @@
+# Python unittestマスターガイド
+## 新人エンジニアのための実践的テストコード入門
+
+---
+
+## 📚 この記事で学べること
+
+このガイドを読めば、以下のようなテストコードが**ゼロから書けるようになります**：
+
+- ✅ unittest の基本的な使い方
+- ✅ テストクラスとテストメソッドの書き方
+- ✅ setUp/tearDown による効率的なテスト
+- ✅ アサーションメソッドの使い分け
+- ✅ 統合テストの実装
+- ✅ テスト実行とレポート出力
+
+---
+
+## 1. unittestとは？
+
+### なぜテストを書くのか？
+
+```python
+# テストがないコード = 不安
+def add(a, b):
+    return a + b
+
+# 本当に動く？バグはない？
+# 将来変更しても大丈夫？
+```
+
+```python
+# テストがあるコード = 安心
+def add(a, b):
+    return a + b
+
+class TestAdd(unittest.TestCase):
+    def test_add_positive(self):
+        self.assertEqual(add(2, 3), 5)  # OK!
+    
+    def test_add_negative(self):
+        self.assertEqual(add(-1, 1), 0)  # OK!
+```
+
+**テストを書くメリット：**
+- 🛡️ バグの早期発見
+- 📝 動作仕様の明示
+- 🔄 リファクタリングの安全性
+- 🤝 チーム開発での信頼性
+
+---
+
+## 2. 最初のテストを書く
+
+### Step 1: 最小のテスト
+
+```python
+import unittest
+
+# テスト対象のクラス
+class Calculator:
+    def add(self, a, b):
+        return a + b
+
+# テストクラス（unittest.TestCaseを継承）
+class TestCalculator(unittest.TestCase):
+    
+    # test_ で始まるメソッドが自動実行される
+    def test_add(self):
+        calc = Calculator()
+        result = calc.add(2, 3)
+        self.assertEqual(result, 5)  # 期待値と比較
+
+# テスト実行
+if __name__ == "__main__":
+    unittest.main()
+```
+
+**実行方法：**
+```bash
+python test_calculator.py
+```
+
+**出力例：**
+```
+.
+----------------------------------------------------------------------
+Ran 1 test in 0.001s
+
+OK
+```
+
+---
+
+## 3. テストクラスの基本構造
+
+### 3.1 命名規則
+
+```python
+# ❌ 悪い例：ルールに従っていない
+class MyTest:  # TestCase を継承していない
+    def check_something(self):  # test_ で始まっていない
+        pass
+
+# ✅ 良い例：ルールに従っている
+class TestEmployee(unittest.TestCase):  # TestCase を継承
+    def test_get_name(self):  # test_ で始まる
+        pass
+    
+    def test_set_salary(self):  # test_ で始まる
+        pass
+```
+
+**命名規則：**
+- クラス名: `Test` + テスト対象名
+- メソッド名: `test_` + 機能名
+- ファイル名: `test_` + 対象ファイル名
+
+### 3.2 基本的なテストメソッド
+
+```python
+class TestEmployee(unittest.TestCase):
+    
+    def test_initial_values(self):
+        """初期値のテスト"""
+        emp = Employee()
+        
+        # 実際の値と期待値を比較
+        self.assertEqual(emp.get_name(), "")
+        self.assertEqual(emp.get_salary(), 0)
+```
+
+**ポイント：**
+- 1メソッド = 1テスト項目
+- テストメソッドには docstring を書く
+- アサーション（検証）は明確に
+
+---
+
+## 4. setUp と tearDown
+
+### 4.1 setUp（事前準備）
+
+```python
+# ❌ 悪い例：毎回同じコードを書く
+class TestEmployee(unittest.TestCase):
+    
+    def test_get_name(self):
+        emp = Employee()  # 毎回インスタンス作成
+        emp.set_name("テスト")
+        self.assertEqual(emp.get_name(), "テスト")
+    
+    def test_get_salary(self):
+        emp = Employee()  # また作成（重複）
+        emp.set_salary(250000)
+        self.assertEqual(emp.get_salary(), 250000)
+```
+
+```python
+# ✅ 良い例：setUp で共通化
+class TestEmployee(unittest.TestCase):
+    
+    def setUp(self):
+        """各テストの前に自動実行される"""
+        self.emp = Employee()
+        print("setUp: インスタンス作成")
+    
+    def test_get_name(self):
+        self.emp.set_name("テスト")
+        self.assertEqual(self.emp.get_name(), "テスト")
+    
+    def test_get_salary(self):
+        self.emp.set_salary(250000)
+        self.assertEqual(self.emp.get_salary(), 250000)
+```
+
+**setUp の役割：**
+- 各テストメソッドの**前**に自動実行
+- テストデータの準備
+- インスタンスの作成
+- 初期設定
+
+### 4.2 tearDown（後処理）
+
+```python
+class TestDatabase(unittest.TestCase):
+    
+    def setUp(self):
+        """テスト前：DB接続"""
+        self.db = Database()
+        self.db.connect()
+        print("setUp: DB接続")
+    
+    def tearDown(self):
+        """テスト後：クリーンアップ"""
+        self.db.disconnect()
+        print("tearDown: DB切断")
+    
+    def test_insert(self):
+        self.db.insert("test", "data")
+        self.assertTrue(self.db.exists("test"))
+```
+
+**実行順序：**
+```
+1. setUp()
+2. test_insert()
+3. tearDown()
+```
+
+---
+
+## 5. アサーションメソッド完全ガイド
+
+### 5.1 等価性のテスト
+
+```python
+class TestAssertions(unittest.TestCase):
+    
+    def test_equal(self):
+        """等しいことを確認"""
+        self.assertEqual(1 + 1, 2)
+        self.assertEqual("hello", "hello")
+        self.assertEqual([1, 2], [1, 2])
+    
+    def test_not_equal(self):
+        """等しくないことを確認"""
+        self.assertNotEqual(1, 2)
+        self.assertNotEqual("hello", "world")
+```
+
+### 5.2 真偽値のテスト
+
+```python
+def test_boolean(self):
+    """真偽値のテスト"""
+    # True であることを確認
+    self.assertTrue(True)
+    self.assertTrue(1 < 2)
+    self.assertTrue("abc".startswith("a"))
+    
+    # False であることを確認
+    self.assertFalse(False)
+    self.assertFalse(1 > 2)
+    self.assertFalse("abc".startswith("z"))
+```
+
+### 5.3 None のテスト
+
+```python
+def test_none(self):
+    """None のテスト"""
+    value = None
+    self.assertIsNone(value)
+    
+    value = "something"
+    self.assertIsNotNone(value)
+```
+
+### 5.4 型のテスト
+
+```python
+def test_type(self):
+    """型のテスト"""
+    emp = Employee()
+    
+    # Employee のインスタンスか確認
+    self.assertIsInstance(emp, Employee)
+    
+    # 継承関係も確認できる
+    staff = Staff()
+    self.assertIsInstance(staff, Employee)  # Staff は Employee を継承
+```
+
+### 5.5 コレクションのテスト
+
+```python
+def test_collections(self):
+    """コレクションのテスト"""
+    # リストに要素が含まれるか
+    self.assertIn(1, [1, 2, 3])
+    self.assertIn("a", ["a", "b", "c"])
+    
+    # 含まれないことを確認
+    self.assertNotIn(4, [1, 2, 3])
+    
+    # リスト全体の比較
+    self.assertListEqual([1, 2, 3], [1, 2, 3])
+```
+
+### 5.6 属性の存在確認
+
+```python
+def test_attributes(self):
+    """属性の存在確認"""
+    staff = Staff()
+    
+    # メソッドが存在するか（継承の確認に便利）
+    self.assertTrue(hasattr(staff, 'get_name'))
+    self.assertTrue(hasattr(staff, 'get_salary'))
+    self.assertTrue(hasattr(staff, 'get_division'))
+```
+
+### 5.7 よく使うアサーション一覧表
+
+| アサーション | 用途 | 使用例 |
+|------------|------|--------|
+| `assertEqual(a, b)` | a == b | `assertEqual(result, 100)` |
+| `assertNotEqual(a, b)` | a != b | `assertNotEqual(x, y)` |
+| `assertTrue(x)` | x が True | `assertTrue(is_valid)` |
+| `assertFalse(x)` | x が False | `assertFalse(has_error)` |
+| `assertIsNone(x)` | x が None | `assertIsNone(result)` |
+| `assertIsNotNone(x)` | x が None でない | `assertIsNotNone(obj)` |
+| `assertIn(a, b)` | a が b に含まれる | `assertIn("a", list)` |
+| `assertIsInstance(a, b)` | a が b のインスタンス | `assertIsInstance(obj, MyClass)` |
+
+---
+
+## 6. 実践：段階的なテスト作成
+
+### Stage 1: 単純なゲッター/セッターのテスト
+
+```python
+class TestEmployee(unittest.TestCase):
+    
+    def setUp(self):
+        self.emp = Employee()
+    
+    def test_set_and_get_name(self):
+        """名前の設定と取得"""
+        # Arrange（準備）
+        expected_name = "テストユーザー"
+        
+        # Act（実行）
+        self.emp.set_name(expected_name)
+        actual_name = self.emp.get_name()
+        
+        # Assert（検証）
+        self.assertEqual(actual_name, expected_name)
+```
+
+**AAA パターン（Arrange-Act-Assert）:**
+- **Arrange**: テストデータを準備
+- **Act**: テスト対象を実行
+- **Assert**: 結果を検証
+
+### Stage 2: 複数属性のテスト
+
+```python
+def test_complete_data(self):
+    """全属性の設定と取得"""
+    # 全属性を設定
+    self.emp.set_name("ユーザーA")
+    self.emp.set_salary(300000)
+    
+    # 全属性を検証
+    self.assertEqual(self.emp.get_name(), "ユーザーA")
+    self.assertEqual(self.emp.get_salary(), 300000)
+```
+
+### Stage 3: 継承のテスト
+
+```python
+class TestStaff(unittest.TestCase):
+    
+    def setUp(self):
+        self.staff = Staff()
+    
+    def test_inheritance(self):
+        """継承の確認"""
+        # Staff は Employee を継承している
+        self.assertIsInstance(self.staff, Employee)
+        
+        # 親クラスのメソッドが使える
+        self.assertTrue(hasattr(self.staff, 'get_name'))
+        self.assertTrue(hasattr(self.staff, 'get_salary'))
+    
+    def test_division(self):
+        """部署の管理（Staff固有機能）"""
+        self.staff.set_division("開発部")
+        self.assertEqual(self.staff.get_division(), "開発部")
+```
+
+### Stage 4: オーバーライドのテスト
+
+```python
+class TestPresident(unittest.TestCase):
+    
+    def setUp(self):
+        self.company = Company()
+        self.president = self.company.ceo
+    
+    def test_name_override(self):
+        """get_name() のオーバーライド"""
+        self.president.set_name("社長A")
+        
+        # 「社長」が自動的に付く
+        self.assertEqual(self.president.get_name(), "社長A社長")
+```
+
+### Stage 5: リストの操作テスト
+
+```python
+class TestCompany(unittest.TestCase):
+    
+    def setUp(self):
+        self.company = Company()
+    
+    def test_add_staff(self):
+        """社員追加のテスト"""
+        # 初期状態
+        self.assertEqual(len(self.company.staffs), 0)
+        
+        # 社員を追加
+        staff = Staff()
+        staff.set_name("社員A")
+        self.company.staffs.append(staff)
+        
+        # 検証
+        self.assertEqual(len(self.company.staffs), 1)
+        self.assertEqual(self.company.staffs[0].get_name(), "社員A")
+```
+
+### Stage 6: 削除操作のテスト
+
+```python
+def test_dismiss(self):
+    """解雇機能のテスト"""
+    # 社員を2人追加
+    staff1 = Staff()
+    staff1.set_name("社員A")
+    self.company.staffs.append(staff1)
+    
+    staff2 = Staff()
+    staff2.set_name("社員B")
+    self.company.staffs.append(staff2)
+    
+    # 解雇前の確認
+    self.assertEqual(len(self.company.staffs), 2)
+    
+    # 社員Aを解雇
+    self.company.ceo.dismiss("社員A")
+    
+    # 解雇後の確認
+    self.assertEqual(len(self.company.staffs), 1)
+    self.assertEqual(self.company.staffs[0].get_name(), "社員B")
+```
+
+---
+
+## 7. 標準出力のキャプチャ
+
+### なぜキャプチャするのか？
+
+```python
+# print がテスト結果を見づらくする
+def set_dismissal_procedure(self, name):
+    print(f"{name}を解雇しました")  # このprintを抑制したい
+    print(f"現在の社員数: {len(self.staffs)}人")
+```
+
+### キャプチャの実装
+
+```python
+from io import StringIO
+import sys
+
+class TestCompany(unittest.TestCase):
+    
+    def test_with_output_capture(self):
+        """標準出力をキャプチャ"""
+        # 標準出力をキャプチャ用オブジェクトに切り替え
+        captured = StringIO()
+        sys.stdout = captured
+        
+        # テスト対象を実行（print が captured に保存される）
+        self.company.set_dismissal_procedure("社員A")
+        
+        # 標準出力を元に戻す
+        sys.stdout = sys.__stdout__
+        
+        # 通常の検証
+        self.assertEqual(len(self.company.staffs), 0)
+```
+
+**ポイント：**
+- `StringIO()`: メモリ上の文字列バッファ
+- `sys.stdout`: 標準出力先
+- `sys.__stdout__`: オリジナルの標準出力
+
+---
+
+## 8. 統合テスト
+
+### 統合テストとは？
+
+**単体テスト**: 個別の機能をテスト
+```python
+def test_add_staff(self):
+    """社員追加だけをテスト"""
+    pass
+```
+
+**統合テスト**: 複数の機能を組み合わせてテスト
+```python
+def test_complete_scenario(self):
+    """実際の業務フローをテスト"""
+    # 1. 会社作成
+    # 2. 社員追加
+    # 3. 社長設定
+    # 4. 解雇実行
+    # 5. 最終状態確認
+    pass
+```
+
+### 統合テストの実装例
+
+```python
+class TestIntegration(unittest.TestCase):
+    
+    def test_complete_scenario(self):
+        """完全なシナリオテスト"""
+        # === 1. 初期設定 ===
+        company = Company()
+        
+        # === 2. 社員登録 ===
+        staff1 = Staff()
+        staff1.set_name("社員A")
+        staff1.set_salary(250000)
+        staff1.set_division("営業部")
+        company.staffs.append(staff1)
+        
+        staff2 = Staff()
+        staff2.set_name("社員B")
+        staff2.set_salary(300000)
+        staff2.set_division("開発部")
+        company.staffs.append(staff2)
+        
+        # === 3. 社長設定 ===
+        company.ceo.set_name("社長A")
+        company.ceo.set_salary(2500000)
+        
+        # === 4. 中間検証 ===
+        self.assertEqual(len(company.staffs), 2)
+        self.assertEqual(company.ceo.get_name(), "社長A社長")
+        
+        # === 5. 解雇実行 ===
+        company.ceo.dismiss("社員A")
+        
+        # === 6. 最終検証 ===
+        self.assertEqual(len(company.staffs), 1)
+        remaining = company.staffs[0]
+        self.assertEqual(remaining.get_name(), "社員B")
+        self.assertEqual(remaining.get_salary(), 300000)
+        self.assertEqual(remaining.get_division(), "開発部")
+```
+
+**統合テストのコツ：**
+- ✅ 実際の使用シナリオを再現
+- ✅ 複数の機能を組み合わせる
+- ✅ 途中経過も検証する
+- ✅ コメントで処理を区切る
+
+---
+
+## 9. テストスイートの作成
+
+### テストスイートとは？
+
+複数のテストクラスをまとめて実行する仕組み。
+
+```python
+def run_tests_with_summary():
+    """全テストを実行"""
+    # Step 1: テストローダーを作成
+    loader = unittest.TestLoader()
+    
+    # Step 2: テストスイート（コンテナ）を作成
+    suite = unittest.TestSuite()
+    
+    # Step 3: テストクラスを追加
+    suite.addTests(loader.loadTestsFromTestCase(TestEmployee))
+    suite.addTests(loader.loadTestsFromTestCase(TestStaff))
+    suite.addTests(loader.loadTestsFromTestCase(TestPresident))
+    suite.addTests(loader.loadTestsFromTestCase(TestCompany))
+    
+    # Step 4: テスト実行
+    runner = unittest.TextTestRunner(verbosity=2)
+    result = runner.run(suite)
+    
+    # Step 5: 結果サマリー
+    print(f"\n実行: {result.testsRun}件")
+    print(f"成功: {result.testsRun - len(result.failures)}件")
+    print(f"失敗: {len(result.failures)}件")
+    
+    return result.wasSuccessful()
+```
+
+**verbosity の値：**
+- `0`: エラーのみ表示
+- `1`: 各テストを `.` で表示（デフォルト）
+- `2`: 各テストの名前を詳細表示
+
+---
+
+## 10. 実践的なテストコード設計
+
+### 10.1 テストデータの管理
+
+```python
+# ❌ 悪い例：マジックナンバー
+def test_salary(self):
+    self.emp.set_salary(250000)
+    self.assertEqual(self.emp.get_salary(), 250000)
+
+# ✅ 良い例：定数化
+class TestEmployee(unittest.TestCase):
+    # テストデータを定数として定義
+    TEST_NAME = "テストユーザー"
+    TEST_SALARY = 250000
+    TEST_DIVISION = "開発部"
+    
+    def test_salary(self):
+        self.emp.set_salary(self.TEST_SALARY)
+        self.assertEqual(self.emp.get_salary(), self.TEST_SALARY)
+```
+
+### 10.2 ヘルパーメソッドの活用
+
+```python
+class TestCompany(unittest.TestCase):
+    
+    def setUp(self):
+        self.company = Company()
+    
+    # ヘルパーメソッド（test_ で始まらない）
+    def _create_test_staff(self, name, salary, division):
+        """テスト用社員を作成"""
+        staff = Staff()
+        staff.set_name(name)
+        staff.set_salary(salary)
+        staff.set_division(division)
+        return staff
+    
+    # テストメソッドで使用
+    def test_add_multiple_staff(self):
+        staff1 = self._create_test_staff("社員A", 250000, "営業部")
+        staff2 = self._create_test_staff("社員B", 300000, "開発部")
+        
+        self.company.staffs.append(staff1)
+        self.company.staffs.append(staff2)
+        
+        self.assertEqual(len(self.company.staffs), 2)
+```
+
+### 10.3 エラーハンドリング
+
+```python
+def test_import_error(self):
+    """インポートエラーのテスト"""
+    try:
+        from non_existent_module import SomeClass
+        self.fail("ImportError が発生すべき")
+    except ImportError as e:
+        # エラーメッセージの確認
+        self.assertIn("non_existent_module", str(e))
+```
+
+---
+
+## 11. デバッグとトラブルシューティング
+
+### 11.1 テストが失敗したら
+
+```
+FAIL: test_salary (test_employee.TestEmployee)
+----------------------------------------------------------------------
+AssertionError: 250000 != 300000
+```
+
+**確認すべきこと：**
+1. ✅ 期待値が正しいか？
+2. ✅ テスト対象のコードが正しいか？
+3. ✅ setUp でデータが正しく準備されているか？
+
+### 11.2 デバッグプリント
+
+```python
+def test_salary(self):
+    self.emp.set_salary(250000)
+    
+    # デバッグ用に値を出力
+    print(f"DEBUG: salary = {self.emp.get_salary()}")
+    
+    self.assertEqual(self.emp.get_salary(), 250000)
+```
+
+### 11.3 テストの選択実行
+
+```bash
+# 特定のテストクラスだけ実行
+python -m unittest test_employee.TestEmployee
+
+# 特定のテストメソッドだけ実行
+python -m unittest test_employee.TestEmployee.test_salary
+
+# verboseモードで実行
+python -m unittest test_employee.TestEmployee -v
+```
+
+---
+
+## 12. 実践課題
+
+### 課題1: 基本的なテスト（初級）
+
+以下のクラスのテストを書いてください：
+
+```python
+class BankAccount:
+    def __init__(self):
+        self.balance = 0
+    
+    def deposit(self, amount):
+        self.balance += amount
+    
+    def withdraw(self, amount):
+        if self.balance >= amount:
+            self.balance -= amount
+            return True
+        return False
+```
+
+**書くべきテスト：**
+- 初期残高が0であることを確認
+- 入金後の残高を確認
+- 出金成功時の残高を確認
+- 残高不足時の挙動を確認
+
+### 課題2: リストの操作（中級）
+
+```python
+class TodoList:
+    def __init__(self):
+        self.items = []
+    
+    def add(self, item):
+        self.items.append(item)
+    
+    def remove(self, item):
+        if item in self.items:
+            self.items.remove(item)
+            return True
+        return False
+    
+    def count(self):
+        return len(self.items)
+```
+
+**書くべきテスト：**
+- 追加機能
+- 削除機能
+- 件数カウント
+- 存在しない項目の削除
+
+### 課題3: 統合テスト（上級）
+
+ショッピングカートシステムの統合テストを書いてください：
+- 商品追加 → 個数変更 → 削除 → 合計金額計算
+
+---
+
+## 13. まとめ：テストコードのベストプラクティス
+
+### ✅ やるべきこと
+
+1. **setUp で共通準備を行う**
+   ```python
+   def setUp(self):
+       self.obj = MyClass()
+   ```
+
+2. **1テスト1検証を心がける**
+   ```python
+   def test_one_thing(self):
+       # 1つの機能だけをテスト
+       pass
+   ```
+
+3. **テスト名を説明的にする**
+   ```python
+   def test_salary_cannot_be_negative(self):
+       # 名前から何をテストしているか分かる
+       pass
+   ```
+
+4. **AAA パターンを使う**
+   ```python
+   # Arrange
+   # Act
+   # Assert
+   ```
+
+### ❌ 避けるべきこと
+
+1. **テスト間の依存関係**
+   ```python
+   # ❌ test_a の結果に test_b が依存
+   ```
+
+2. **テストにビジネスロジック**
+   ```python
+   # ❌ テスト内で複雑な計算
+   ```
+
+3. **曖昧なアサーション**
+   ```python
+   # ❌ self.assertTrue(result)  # 何が True?
+   # ✅ self.assertEqual(result, expected_value)
+   ```
+
+---
+
+## 14. 次のステップ
+
+### さらに学ぶべきこと
+
+1. **pytest への移行**
+   - より柔軟なテストフレームワーク
+   - フィクスチャ機能が強力
+
+2. **モックの活用**
+   - `unittest.mock` でダミーオブジェクト作成
+   - 外部依存を排除
+
+3. **カバレッジ測定**
+   ```bash
+   pip install coverage
+   coverage run -m unittest
+   coverage report
+   ```
+
+4. **CI/CD への統合**
+   - GitHub Actions
+   - GitLab CI
+   - Jenkins
+
+---
+
+## 付録：クイックリファレンス
+
+### よく使うコマンド
+
+```bash
+# 全テスト実行
+python -m unittest discover
+
+# 特定のテストファイル実行
+python test_employee.py
+
+# verboseモード
+python -m unittest -v
+
+# 失敗したテストのみ再実行
+python -m unittest --failfast
+```
+
+### よく使うアサーション
+
+```python
+# 等価性
+assertEqual(a, b)
+assertNotEqual(a, b)
+
+# 真偽値
+assertTrue(x)
+assertFalse(x)
+
+# None
+assertIsNone(x)
+assertIsNotNone(x)
+
+# 包含
+assertIn(a, b)
+assertNotIn(a, b)
+
+# 型
+assertIsInstance(a, Type)
+
+# 例外
+assertRaises(ExceptionType)
+```
+
+---
+
+このガイドを参考に、実際にコードを書いて練習してください。  
+**テストコードは書けば書くほど上達します！** 🚀
