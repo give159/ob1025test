@@ -1,0 +1,1080 @@
+"""
+社員管理システム - 全ファイル（コピペ用）
+
+このファイルには10個のファイルが含まれています。
+各ファイルを探して、コピー＆ペーストしてください。
+
+【重要】このファイルは実行しません！
+各ファイルを別々に作成してください。
+"""
+
+# ============================================================
+# ファイル1: employee.py
+# ============================================================
+# 【コピー開始：ここから下をコピーして employee.py に貼り付け】
+"""
+employee.py
+社員基底クラスモジュール
+"""
+
+
+class Employee:
+    """
+    社員の基底クラス
+    
+    すべての社員タイプの基本となるクラスです。
+    名前と給料の情報を管理します。
+    
+    Attributes:
+        _name (str): 社員の名前
+        _salary (int): 社員の給料
+    """
+    
+    def __init__(self):
+        """Employeeクラスのコンストラクタ"""
+        self._name: str = ""
+        self._salary: int = 0
+    
+    def get_name(self) -> str:
+        """
+        社員の名前を取得する
+        
+        Returns:
+            str: 社員の名前
+        """
+        return self._name
+    
+    def set_name(self, emp_name: str) -> None:
+        """
+        社員の名前を設定する
+        
+        Args:
+            emp_name (str): 設定する社員の名前
+        """
+        self._name = emp_name
+    
+    def get_salary(self) -> int:
+        """
+        社員の給料を取得する
+        
+        Returns:
+            int: 社員の給料
+        """
+        return self._salary
+    
+    def set_salary(self, emp_salary: int) -> None:
+        """
+        社員の給料を設定する
+        
+        Args:
+            emp_salary (int): 設定する給料
+        """
+        self._salary = emp_salary
+    
+    def __del__(self):
+        """デストラクタ - インスタンスが削除されるときに呼ばれる"""
+        print(f"[デストラクタ] Employeeインスタンス '{self._name}' が削除されました")
+# 【コピー終了：ここまで employee.py】
+
+
+# ============================================================
+# ファイル2: staff.py
+# ============================================================
+# 【コピー開始：ここから下をコピーして staff.py に貼り付け】
+"""
+staff.py
+スタッフクラスモジュール
+"""
+
+from employee import Employee
+
+
+class Staff(Employee):
+    """
+    一般社員クラス
+    
+    Employeeクラスを継承し、所属部署の情報を追加します。
+    
+    Attributes:
+        _division (str): 所属部署
+    """
+    
+    def __init__(self):
+        """Staffクラスのコンストラクタ"""
+        super().__init__()
+        self._division: str = ""
+    
+    def get_division(self) -> str:
+        """
+        所属部署を取得する
+        
+        Returns:
+            str: 所属部署名
+        """
+        return self._division
+    
+    def set_division(self, emp_division: str) -> None:
+        """
+        所属部署を設定する
+        
+        Args:
+            emp_division (str): 設定する部署名
+        """
+        self._division = emp_division
+    
+    def __del__(self):
+        """デストラクタ - インスタンスが削除されるときに呼ばれる"""
+        print(f"[デストラクタ] Staffインスタンス '{self._name}' が削除されました")
+# 【コピー終了：ここまで staff.py】
+
+
+# ============================================================
+# ファイル3: president.py
+# ============================================================
+# 【コピー開始：ここから下をコピーして president.py に貼り付け】
+"""
+president.py
+社長クラスモジュール
+"""
+
+from employee import Employee
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from company import Company
+
+
+class President(Employee):
+    """
+    社長クラス
+    
+    Employeeクラスを継承し、会社への参照を持ちます。
+    get_name()メソッドをオーバーライドして「社長」の肩書きを追加します。
+    
+    Attributes:
+        _company (Company): 所属する会社のインスタンス
+    """
+    
+    def __init__(self, company: 'Company'):
+        """
+        Presidentクラスのコンストラクタ
+        
+        Args:
+            company (Company): 所属する会社のインスタンス
+        """
+        super().__init__()
+        self._company: 'Company' = company
+    
+    def get_name(self) -> str:
+        """
+        社長の名前を取得する（オーバーライド）
+        
+        名前の末尾に「社長」の肩書きを追加します。
+        
+        Returns:
+            str: 「社長」の肩書き付きの名前
+        """
+        return self._name + "社長"
+    
+    def dismiss(self, name: str) -> None:
+        """
+        指定された名前の社員を解雇する
+        
+        Args:
+            name (str): 解雇する社員の名前
+        """
+        self._company._staffs = [
+            staff for staff in self._company._staffs 
+            if staff.get_name() != name
+        ]
+        print(f"[解雇通知] {name}さんを解雇しました")
+    
+    def __del__(self):
+        """デストラクタ - インスタンスが削除されるときに呼ばれる"""
+        print(f"[デストラクタ] Presidentインスタンス '{self._name}' が削除されました")
+# 【コピー終了：ここまで president.py】
+
+
+# ============================================================
+# ファイル4: company.py
+# ============================================================
+# 【コピー開始：ここから下をコピーして company.py に貼り付け】
+"""
+company.py
+会社クラスモジュール
+"""
+
+from typing import List
+from functools import wraps
+from staff import Staff
+from president import President
+
+
+def print_employee_count(func):
+    """
+    社員数を表示するデコレータ
+    
+    メソッド実行後に現在の社員数（社長含む）を表示します。
+    
+    Args:
+        func: デコレートする関数
+        
+    Returns:
+        ラップされた関数
+    """
+    @wraps(func)
+    def wrapper(self, *args, **kwargs):
+        result = func(self, *args, **kwargs)
+        total_employees = len(self._staffs) + 1  # スタッフ数 + 社長
+        print(f"現在わが社の社員数は{total_employees}人になっています")
+        return result
+    return wrapper
+
+
+class Company:
+    """
+    会社クラス
+    
+    社員（Staff）と社長（President）を管理します。
+    
+    Attributes:
+        _staffs (List[Staff]): 社員のリスト
+        _ceo (President): 社長
+    """
+    
+    def __init__(self):
+        """Companyクラスのコンストラクタ"""
+        self._staffs: List[Staff] = []
+        self._ceo: President = President(self)
+    
+    @property
+    def staffs(self) -> List[Staff]:
+        """
+        社員リストを取得する（プロパティ）
+        
+        Returns:
+            List[Staff]: 社員のリスト
+        """
+        return self._staffs
+    
+    @property
+    def ceo(self) -> President:
+        """
+        社長を取得する（プロパティ）
+        
+        Returns:
+            President: 社長のインスタンス
+        """
+        return self._ceo
+    
+    @print_employee_count
+    def set_dismissal_procedure(self, name: str) -> None:
+        """
+        解雇手続きを実行する
+        
+        指定された名前の社員を解雇し、現在の社員数を表示します。
+        このメソッドはデコレータにより社員数が自動表示されます。
+        
+        Args:
+            name (str): 解雇する社員の名前
+        """
+        self._staffs = [
+            staff for staff in self._staffs 
+            if staff.get_name() != name
+        ]
+        print(f"[解雇手続き完了] {name}さんの解雇手続きが完了しました")
+    
+    def __del__(self):
+        """デストラクタ - インスタンスが削除されるときに呼ばれる"""
+        print("[デストラクタ] Companyインスタンスが削除されました")
+# 【コピー終了：ここまで company.py】
+
+
+# ============================================================
+# ファイル5: test_employee.py
+# ============================================================
+# 【コピー開始：ここから下をコピーして test_employee.py に貼り付け】
+"""
+test_employee.py
+Employeeクラス専用テストファイル
+"""
+
+import unittest
+from employee import Employee
+
+
+class TestEmployee(unittest.TestCase):
+    """Employeeクラスのテストケース"""
+    
+    def setUp(self):
+        """各テストの前に実行される準備処理"""
+        self.employee = Employee()
+    
+    def test_initial_values(self):
+        """初期値のテスト"""
+        self.assertEqual(self.employee.get_name(), "")
+        self.assertEqual(self.employee.get_salary(), 0)
+        print("✓ Employeeの初期値テスト成功")
+    
+    def test_set_and_get_name(self):
+        """名前の設定と取得のテスト"""
+        self.employee.set_name("山田太郎")
+        self.assertEqual(self.employee.get_name(), "山田太郎")
+        print("✓ 名前の設定・取得テスト成功")
+    
+    def test_set_and_get_salary(self):
+        """給料の設定と取得のテスト"""
+        self.employee.set_salary(300000)
+        self.assertEqual(self.employee.get_salary(), 300000)
+        print("✓ 給料の設定・取得テスト成功")
+    
+    def test_name_update(self):
+        """名前の更新テスト"""
+        self.employee.set_name("田中一郎")
+        self.assertEqual(self.employee.get_name(), "田中一郎")
+        self.employee.set_name("田中次郎")
+        self.assertEqual(self.employee.get_name(), "田中次郎")
+        print("✓ 名前の更新テスト成功")
+    
+    def test_salary_update(self):
+        """給料の更新テスト"""
+        self.employee.set_salary(200000)
+        self.assertEqual(self.employee.get_salary(), 200000)
+        self.employee.set_salary(250000)
+        self.assertEqual(self.employee.get_salary(), 250000)
+        print("✓ 給料の更新テスト成功")
+
+
+if __name__ == "__main__":
+    print("=" * 60)
+    print("Employeeクラス テスト実行")
+    print("=" * 60)
+    unittest.main(verbosity=2)
+# 【コピー終了：ここまで test_employee.py】
+
+
+# ============================================================
+# ファイル6: test_staff.py
+# ============================================================
+# 【コピー開始：ここから下をコピーして test_staff.py に貼り付け】
+"""
+test_staff.py
+Staffクラス専用テストファイル
+"""
+
+import unittest
+from employee import Employee
+from staff import Staff
+
+
+class TestStaff(unittest.TestCase):
+    """Staffクラスのテストケース"""
+    
+    def setUp(self):
+        """各テストの前に実行される準備処理"""
+        self.staff = Staff()
+    
+    def test_inheritance(self):
+        """継承のテスト"""
+        self.assertIsInstance(self.staff, Employee)
+        self.assertTrue(hasattr(self.staff, 'get_name'))
+        self.assertTrue(hasattr(self.staff, 'get_salary'))
+        print("✓ Staff継承テスト成功")
+    
+    def test_division_initial_value(self):
+        """部署の初期値テスト"""
+        self.assertEqual(self.staff.get_division(), "")
+        print("✓ 部署の初期値テスト成功")
+    
+    def test_set_and_get_division(self):
+        """部署の設定と取得のテスト"""
+        self.staff.set_division("開発部")
+        self.assertEqual(self.staff.get_division(), "開発部")
+        print("✓ 部署の設定・取得テスト成功")
+    
+    def test_complete_staff_data(self):
+        """完全な社員データのテスト"""
+        self.staff.set_name("佐藤太郎")
+        self.staff.set_salary(200000)
+        self.staff.set_division("営業部")
+        
+        self.assertEqual(self.staff.get_name(), "佐藤太郎")
+        self.assertEqual(self.staff.get_salary(), 200000)
+        self.assertEqual(self.staff.get_division(), "営業部")
+        print("✓ 完全な社員データテスト成功")
+    
+    def test_division_update(self):
+        """部署の更新テスト"""
+        self.staff.set_division("営業部")
+        self.assertEqual(self.staff.get_division(), "営業部")
+        self.staff.set_division("開発部")
+        self.assertEqual(self.staff.get_division(), "開発部")
+        print("✓ 部署の更新テスト成功")
+    
+    def test_multiple_properties(self):
+        """複数プロパティの連続設定テスト"""
+        self.staff.set_name("鈴木次郎")
+        self.staff.set_salary(300000)
+        self.staff.set_division("企画部")
+        
+        # すべての値が正しく保持されているか確認
+        self.assertEqual(self.staff.get_name(), "鈴木次郎")
+        self.assertEqual(self.staff.get_salary(), 300000)
+        self.assertEqual(self.staff.get_division(), "企画部")
+        print("✓ 複数プロパティ連続設定テスト成功")
+
+
+if __name__ == "__main__":
+    print("=" * 60)
+    print("Staffクラス テスト実行")
+    print("=" * 60)
+    unittest.main(verbosity=2)
+# 【コピー終了：ここまで test_staff.py】
+
+
+# ============================================================
+# ファイル7: test_president.py
+# ============================================================
+# 【コピー開始：ここから下をコピーして test_president.py に貼り付け】
+"""
+test_president.py
+Presidentクラス専用テストファイル
+"""
+
+import unittest
+import sys
+from io import StringIO
+from employee import Employee
+from staff import Staff
+from president import President
+from company import Company
+
+
+class TestPresident(unittest.TestCase):
+    """Presidentクラスのテストケース"""
+    
+    def setUp(self):
+        """各テストの前に実行される準備処理"""
+        self.company = Company()
+        self.president = self.company.ceo
+    
+    def test_inheritance(self):
+        """継承のテスト"""
+        self.assertIsInstance(self.president, Employee)
+        print("✓ President継承テスト成功")
+    
+    def test_name_override(self):
+        """get_name()のオーバーライドテスト"""
+        self.president.set_name("偉井杉人")
+        self.assertEqual(self.president.get_name(), "偉井杉人社長")
+        print("✓ 名前オーバーライドテスト成功")
+    
+    def test_name_override_empty(self):
+        """空の名前でのオーバーライドテスト"""
+        # 名前を設定しない場合
+        self.assertEqual(self.president.get_name(), "社長")
+        print("✓ 空の名前オーバーライドテスト成功")
+    
+    def test_company_reference(self):
+        """会社インスタンスへの参照テスト"""
+        self.assertIsNotNone(self.president._company)
+        self.assertEqual(self.president._company, self.company)
+        print("✓ 会社参照テスト成功")
+    
+    def test_dismiss_method_single(self):
+        """dismissメソッド - 1人解雇のテスト"""
+        # 社員を追加
+        staff1 = Staff()
+        staff1.set_name("山田太郎")
+        self.company.staffs.append(staff1)
+        
+        staff2 = Staff()
+        staff2.set_name("田中花子")
+        self.company.staffs.append(staff2)
+        
+        # 解雇前の確認
+        self.assertEqual(len(self.company.staffs), 2)
+        
+        # 標準出力をキャプチャ
+        captured_output = StringIO()
+        sys.stdout = captured_output
+        
+        # 解雇実行
+        self.president.dismiss("山田太郎")
+        
+        # 標準出力を復元
+        sys.stdout = sys.__stdout__
+        
+        # 解雇後の確認
+        self.assertEqual(len(self.company.staffs), 1)
+        self.assertEqual(self.company.staffs[0].get_name(), "田中花子")
+        print("✓ dismiss単一解雇テスト成功")
+    
+    def test_dismiss_method_multiple(self):
+        """dismissメソッド - 複数解雇のテスト"""
+        # 社員を3人追加
+        staff1 = Staff()
+        staff1.set_name("山田太郎")
+        self.company.staffs.append(staff1)
+        
+        staff2 = Staff()
+        staff2.set_name("田中花子")
+        self.company.staffs.append(staff2)
+        
+        staff3 = Staff()
+        staff3.set_name("佐藤次郎")
+        self.company.staffs.append(staff3)
+        
+        # 標準出力をキャプチャ
+        captured_output = StringIO()
+        sys.stdout = captured_output
+        
+        # 2人解雇
+        self.president.dismiss("山田太郎")
+        self.president.dismiss("佐藤次郎")
+        
+        # 標準出力を復元
+        sys.stdout = sys.__stdout__
+        
+        # 解雇後の確認
+        self.assertEqual(len(self.company.staffs), 1)
+        self.assertEqual(self.company.staffs[0].get_name(), "田中花子")
+        print("✓ dismiss複数解雇テスト成功")
+    
+    def test_dismiss_nonexistent(self):
+        """存在しない社員の解雇テスト"""
+        # 社員を1人追加
+        staff1 = Staff()
+        staff1.set_name("山田太郎")
+        self.company.staffs.append(staff1)
+        
+        # 標準出力をキャプチャ
+        captured_output = StringIO()
+        sys.stdout = captured_output
+        
+        # 存在しない社員を解雇
+        self.president.dismiss("存在しない人")
+        
+        # 標準出力を復元
+        sys.stdout = sys.__stdout__
+        
+        # 社員数は変わらない
+        self.assertEqual(len(self.company.staffs), 1)
+        print("✓ 存在しない社員解雇テスト成功")
+
+
+if __name__ == "__main__":
+    print("=" * 60)
+    print("Presidentクラス テスト実行")
+    print("=" * 60)
+    unittest.main(verbosity=2)
+# 【コピー終了：ここまで test_president.py】
+
+
+# ============================================================
+# ファイル8: test_company.py
+# ============================================================
+# 【コピー開始：ここから下をコピーして test_company.py に貼り付け】
+"""
+test_company.py
+Companyクラス専用テストファイル
+"""
+
+import unittest
+import sys
+from io import StringIO
+from staff import Staff
+from president import President
+from company import Company
+
+
+class TestCompany(unittest.TestCase):
+    """Companyクラスのテストケース"""
+    
+    def setUp(self):
+        """各テストの前に実行される準備処理"""
+        self.company = Company()
+    
+    def test_initial_state(self):
+        """初期状態のテスト"""
+        self.assertEqual(len(self.company.staffs), 0)
+        self.assertIsNotNone(self.company.ceo)
+        print("✓ 初期状態テスト成功")
+    
+    def test_staffs_property(self):
+        """staffsプロパティのテスト"""
+        self.assertIsInstance(self.company.staffs, list)
+        print("✓ staffsプロパティテスト成功")
+    
+    def test_ceo_property(self):
+        """ceoプロパティのテスト"""
+        self.assertIsInstance(self.company.ceo, President)
+        print("✓ ceoプロパティテスト成功")
+    
+    def test_add_staff(self):
+        """社員追加のテスト"""
+        staff = Staff()
+        staff.set_name("鈴木次郎")
+        self.company.staffs.append(staff)
+        
+        self.assertEqual(len(self.company.staffs), 1)
+        self.assertEqual(self.company.staffs[0].get_name(), "鈴木次郎")
+        print("✓ 社員追加テスト成功")
+    
+    def test_add_multiple_staff(self):
+        """複数社員の追加テスト"""
+        staff1 = Staff()
+        staff1.set_name("佐藤太郎")
+        self.company.staffs.append(staff1)
+        
+        staff2 = Staff()
+        staff2.set_name("鈴木次郎")
+        self.company.staffs.append(staff2)
+        
+        staff3 = Staff()
+        staff3.set_name("田中花子")
+        self.company.staffs.append(staff3)
+        
+        self.assertEqual(len(self.company.staffs), 3)
+        print("✓ 複数社員追加テスト成功")
+    
+    def test_multiple_staff_management(self):
+        """複数社員の管理テスト"""
+        for i in range(5):
+            staff = Staff()
+            staff.set_name(f"社員{i+1}")
+            staff.set_salary(200000 + i * 10000)
+            staff.set_division(f"部署{i+1}")
+            self.company.staffs.append(staff)
+        
+        self.assertEqual(len(self.company.staffs), 5)
+        
+        # 各社員のデータが正しく保持されているか確認
+        for i, staff in enumerate(self.company.staffs):
+            self.assertEqual(staff.get_name(), f"社員{i+1}")
+            self.assertEqual(staff.get_salary(), 200000 + i * 10000)
+            self.assertEqual(staff.get_division(), f"部署{i+1}")
+        
+        print("✓ 複数社員管理テスト成功")
+    
+    def test_set_dismissal_procedure(self):
+        """解雇手続きメソッドのテスト"""
+        # 社員を追加
+        staff1 = Staff()
+        staff1.set_name("佐藤太郎")
+        self.company.staffs.append(staff1)
+        
+        staff2 = Staff()
+        staff2.set_name("鈴木次郎")
+        self.company.staffs.append(staff2)
+        
+        # 解雇前の確認
+        self.assertEqual(len(self.company.staffs), 2)
+        
+        # 標準出力をキャプチャ（デコレータの出力を抑制）
+        captured_output = StringIO()
+        sys.stdout = captured_output
+        
+        # 解雇実行
+        self.company.set_dismissal_procedure("佐藤太郎")
+        
+        # 標準出力を復元
+        sys.stdout = sys.__stdout__
+        
+        # 解雇後の確認
+        self.assertEqual(len(self.company.staffs), 1)
+        self.assertEqual(self.company.staffs[0].get_name(), "鈴木次郎")
+        print("✓ 解雇手続きテスト成功")
+    
+    def test_set_dismissal_procedure_decorator(self):
+        """解雇手続きメソッドのデコレータテスト"""
+        # 社員を追加
+        staff1 = Staff()
+        staff1.set_name("佐藤太郎")
+        self.company.staffs.append(staff1)
+        
+        staff2 = Staff()
+        staff2.set_name("鈴木次郎")
+        self.company.staffs.append(staff2)
+        
+        staff3 = Staff()
+        staff3.set_name("田中花子")
+        self.company.staffs.append(staff3)
+        
+        # 標準出力をキャプチャ
+        captured_output = StringIO()
+        sys.stdout = captured_output
+        
+        # 解雇実行
+        self.company.set_dismissal_procedure("鈴木次郎")
+        
+        # 出力内容を取得
+        output = captured_output.getvalue()
+        
+        # 標準出力を復元
+        sys.stdout = sys.__stdout__
+        
+        # デコレータのメッセージが含まれているか確認
+        self.assertIn("現在わが社の社員数は", output)
+        self.assertIn("3人になっています", output)  # 社員2人 + 社長1人
+        
+        print("✓ デコレータ機能テスト成功")
+    
+    def test_ceo_configuration(self):
+        """社長の設定テスト"""
+        self.company.ceo.set_name("偉井杉人")
+        self.company.ceo.set_salary(2500000)
+        
+        self.assertEqual(self.company.ceo.get_name(), "偉井杉人社長")
+        self.assertEqual(self.company.ceo.get_salary(), 2500000)
+        print("✓ 社長設定テスト成功")
+
+
+if __name__ == "__main__":
+    print("=" * 60)
+    print("Companyクラス テスト実行")
+    print("=" * 60)
+    unittest.main(verbosity=2)
+# 【コピー終了：ここまで test_company.py】
+
+
+# ============================================================
+# ファイル9: test_integration.py
+# ============================================================
+# 【コピー開始：ここから下をコピーして test_integration.py に貼り付け】
+"""
+test_integration.py
+統合テスト - 実際のシナリオをテスト
+"""
+
+import unittest
+import sys
+from io import StringIO
+from staff import Staff
+from company import Company
+
+
+class TestIntegration(unittest.TestCase):
+    """統合テスト - 実際のシナリオをテスト"""
+    
+    def test_complete_scenario(self):
+        """完全なシナリオテスト"""
+        print("\n" + "="*60)
+        print("統合テスト: 完全なシナリオ実行")
+        print("="*60)
+        
+        # 会社作成
+        company = Company()
+        print("1. 会社インスタンス作成 ✓")
+        
+        # 社員追加
+        staff1 = Staff()
+        staff1.set_name("佐藤太郎")
+        staff1.set_salary(200000)
+        staff1.set_division("営業部")
+        company.staffs.append(staff1)
+        print(f"2. {staff1.get_name()}を追加 ✓")
+        
+        staff2 = Staff()
+        staff2.set_name("鈴木次郎")
+        staff2.set_salary(300000)
+        staff2.set_division("開発部")
+        company.staffs.append(staff2)
+        print(f"3. {staff2.get_name()}を追加 ✓")
+        
+        # 社長設定
+        company.ceo.set_name("偉井杉人")
+        company.ceo.set_salary(2500000)
+        print(f"4. {company.ceo.get_name()}を設定 ✓")
+        
+        # 検証
+        self.assertEqual(len(company.staffs), 2)
+        self.assertEqual(company.ceo.get_name(), "偉井杉人社長")
+        print("5. 社員数と社長名を検証 ✓")
+        
+        # 社員情報表示
+        print("\n現在の社員:")
+        for staff in company.staffs:
+            print(f"  - {staff.get_name()}: {staff.get_salary()}円, {staff.get_division()}")
+        print(f"社長: {company.ceo.get_name()}: {company.ceo.get_salary()}円")
+        
+        # 標準出力をキャプチャ
+        captured_output = StringIO()
+        sys.stdout = captured_output
+        
+        # 解雇
+        company.ceo.dismiss("佐藤太郎")
+        
+        # 標準出力を復元
+        sys.stdout = sys.__stdout__
+        
+        print(f"\n6. {staff1.get_name()}を解雇")
+        self.assertEqual(len(company.staffs), 1)
+        print("   解雇完了 ✓")
+        
+        # 最終確認
+        remaining_staff = company.staffs[0]
+        self.assertEqual(remaining_staff.get_name(), "鈴木次郎")
+        self.assertEqual(remaining_staff.get_salary(), 300000)
+        self.assertEqual(remaining_staff.get_division(), "開発部")
+        
+        print("\n最終社員:")
+        print(f"  - {remaining_staff.get_name()}: {remaining_staff.get_salary()}円, {remaining_staff.get_division()}")
+        print("="*60)
+        print("統合テスト完了 ✓✓✓")
+        print("="*60)
+    
+    def test_hire_and_fire_scenario(self):
+        """雇用と解雇のシナリオテスト"""
+        print("\n" + "="*60)
+        print("統合テスト: 雇用と解雇シナリオ")
+        print("="*60)
+        
+        company = Company()
+        company.ceo.set_name("社長太郎")
+        
+        # 初期状態
+        self.assertEqual(len(company.staffs), 0)
+        print("1. 初期状態: 社員0人 ✓")
+        
+        # 5人雇用
+        for i in range(1, 6):
+            staff = Staff()
+            staff.set_name(f"社員{i}")
+            staff.set_salary(200000 + i * 10000)
+            staff.set_division(f"部署{i}")
+            company.staffs.append(staff)
+        
+        self.assertEqual(len(company.staffs), 5)
+        print("2. 5人雇用完了 ✓")
+        
+        # 標準出力をキャプチャ
+        captured_output = StringIO()
+        sys.stdout = captured_output
+        
+        # 2人解雇
+        company.ceo.dismiss("社員2")
+        company.ceo.dismiss("社員4")
+        
+        # 標準出力を復元
+        sys.stdout = sys.__stdout__
+        
+        self.assertEqual(len(company.staffs), 3)
+        print("3. 2人解雇完了（残り3人）✓")
+        
+        # 残った社員を確認
+        remaining_names = [s.get_name() for s in company.staffs]
+        self.assertIn("社員1", remaining_names)
+        self.assertIn("社員3", remaining_names)
+        self.assertIn("社員5", remaining_names)
+        self.assertNotIn("社員2", remaining_names)
+        self.assertNotIn("社員4", remaining_names)
+        print("4. 正しい社員が残っていることを確認 ✓")
+        
+        print("="*60)
+        print("雇用と解雇シナリオテスト完了 ✓✓✓")
+        print("="*60)
+    
+    def test_dismissal_procedure_scenario(self):
+        """解雇手続きシナリオテスト"""
+        print("\n" + "="*60)
+        print("統合テスト: 解雇手続きシナリオ")
+        print("="*60)
+        
+        company = Company()
+        company.ceo.set_name("CEO")
+        
+        # 3人雇用
+        staff1 = Staff()
+        staff1.set_name("Aさん")
+        staff1.set_salary(300000)
+        staff1.set_division("営業部")
+        company.staffs.append(staff1)
+        
+        staff2 = Staff()
+        staff2.set_name("Bさん")
+        staff2.set_salary(350000)
+        staff2.set_division("開発部")
+        company.staffs.append(staff2)
+        
+        staff3 = Staff()
+        staff3.set_name("Cさん")
+        staff3.set_salary(320000)
+        staff3.set_division("企画部")
+        company.staffs.append(staff3)
+        
+        print("1. 3人の社員を雇用 ✓")
+        
+        # 標準出力をキャプチャ
+        captured_output = StringIO()
+        sys.stdout = captured_output
+        
+        # 解雇手続き実行
+        company.set_dismissal_procedure("Bさん")
+        
+        output = captured_output.getvalue()
+        sys.stdout = sys.__stdout__
+        
+        # 検証
+        self.assertEqual(len(company.staffs), 2)
+        self.assertIn("現在わが社の社員数は3人になっています", output)
+        print("2. 解雇手続き完了（デコレータも動作）✓")
+        
+        # 残った社員を確認
+        remaining_names = [s.get_name() for s in company.staffs]
+        self.assertIn("Aさん", remaining_names)
+        self.assertIn("Cさん", remaining_names)
+        self.assertNotIn("Bさん", remaining_names)
+        print("3. 正しい社員が残っている ✓")
+        
+        print("="*60)
+        print("解雇手続きシナリオテスト完了 ✓✓✓")
+        print("="*60)
+
+
+if __name__ == "__main__":
+    print("=" * 60)
+    print("統合テスト実行")
+    print("=" * 60)
+    unittest.main(verbosity=2)
+# 【コピー終了：ここまで test_integration.py】
+
+
+# ============================================================
+# ファイル10: run_all_tests.py
+# ============================================================
+# 【コピー開始：ここから下をコピーして run_all_tests.py に貼り付け】
+"""
+run_all_tests.py
+すべてのテストファイルをまとめて実行するスクリプト
+"""
+
+import unittest
+import sys
+
+
+def run_all_tests():
+    """すべてのテストを実行"""
+    print("=" * 70)
+    print("社員管理システム - 全テスト実行")
+    print("=" * 70)
+    print("\n実行するテストファイル:")
+    print("  1. test_employee.py    - Employeeクラステスト")
+    print("  2. test_staff.py       - Staffクラステスト")
+    print("  3. test_president.py   - Presidentクラステスト")
+    print("  4. test_company.py     - Companyクラステスト")
+    print("  5. test_integration.py - 統合テスト")
+    print("=" * 70)
+    print()
+    
+    # テストローダーの作成
+    loader = unittest.TestLoader()
+    suite = unittest.TestSuite()
+    
+    # 各テストファイルからテストを読み込み
+    try:
+        # test_employee.py
+        from test_employee import TestEmployee
+        suite.addTests(loader.loadTestsFromTestCase(TestEmployee))
+        print("✓ test_employee.py を読み込みました")
+    except ImportError as e:
+        print(f"✗ test_employee.py の読み込みに失敗: {e}")
+    
+    try:
+        # test_staff.py
+        from test_staff import TestStaff
+        suite.addTests(loader.loadTestsFromTestCase(TestStaff))
+        print("✓ test_staff.py を読み込みました")
+    except ImportError as e:
+        print(f"✗ test_staff.py の読み込みに失敗: {e}")
+    
+    try:
+        # test_president.py
+        from test_president import TestPresident
+        suite.addTests(loader.loadTestsFromTestCase(TestPresident))
+        print("✓ test_president.py を読み込みました")
+    except ImportError as e:
+        print(f"✗ test_president.py の読み込みに失敗: {e}")
+    
+    try:
+        # test_company.py
+        from test_company import TestCompany
+        suite.addTests(loader.loadTestsFromTestCase(TestCompany))
+        print("✓ test_company.py を読み込みました")
+    except ImportError as e:
+        print(f"✗ test_company.py の読み込みに失敗: {e}")
+    
+    try:
+        # test_integration.py
+        from test_integration import TestIntegration
+        suite.addTests(loader.loadTestsFromTestCase(TestIntegration))
+        print("✓ test_integration.py を読み込みました")
+    except ImportError as e:
+        print(f"✗ test_integration.py の読み込みに失敗: {e}")
+    
+    print()
+    print("=" * 70)
+    print("テスト実行開始")
+    print("=" * 70)
+    print()
+    
+    # テスト実行
+    runner = unittest.TextTestRunner(verbosity=2)
+    result = runner.run(suite)
+    
+    # 結果サマリー
+    print("\n" + "=" * 70)
+    print("テスト結果サマリー")
+    print("=" * 70)
+    print(f"実行テスト数: {result.testsRun}")
+    print(f"成功: {result.testsRun - len(result.failures) - len(result.errors)}")
+    print(f"失敗: {len(result.failures)}")
+    print(f"エラー: {len(result.errors)}")
+    
+    if result.wasSuccessful():
+        print("\n🎉 すべてのテストが成功しました！")
+        print("=" * 70)
+        print("各クラスとその機能が正しく実装されています。")
+        print("=" * 70)
+    else:
+        print("\n❌ いくつかのテストが失敗しました")
+        print("=" * 70)
+        if result.failures:
+            print("\n失敗したテスト:")
+            for test, traceback in result.failures:
+                print(f"  - {test}")
+        if result.errors:
+            print("\nエラーが発生したテスト:")
+            for test, traceback in result.errors:
+                print(f"  - {test}")
+        print("=" * 70)
+    
+    return result.wasSuccessful()
+
+
+if __name__ == "__main__":
+    try:
+        success = run_all_tests()
+        sys.exit(0 if success else 1)
+    except Exception as e:
+        print("\n" + "=" * 70)
+        print("❌ テスト実行中にエラーが発生しました")
+        print("=" * 70)
+        print(f"エラー内容: {e}")
+        print("\n確認事項:")
+        print("1. すべての必要なファイルが同じフォルダにあるか")
+        print("   - employee.py")
+        print("   - staff.py")
+        print("   - president.py")
+        print("   - company.py")
+        print("   - test_employee.py")
+        print("   - test_staff.py")
+        print("   - test_president.py")
+        print("   - test_company.py")
+        print("   - test_integration.py")
+        print("   - run_all_tests.py (このファイル)")
+        print("\n2. 以下のコマンドでファイルを確認:")
+        print("   dir *.py")
+        print("=" * 70)
+        sys.exit(1)
+# 【コピー終了：ここまで run_all_tests.py】
