@@ -1,0 +1,294 @@
+
+とても良いステップアップですね💪
+「**クラスごとに別ファイルへ分割**」するのは、実務でのプロジェクト開発ではとても重要なスキルです。
+ここでは、あなたの提示した**社員管理システム（統合版）**をベースにして、
+わかりやすくファイル分割する手順と構成を解説します。
+
+---
+
+## 📁 1. ファイル構成（最終イメージ）
+
+まず、最終的なフォルダ構造を以下のようにします👇
+
+```
+employee_system/
+├── main.py                     # 実行用メインファイル
+├── company.py                  # Companyクラス
+├── employee.py                 # Employeeクラス
+├── staff.py                    # Staffクラス
+├── president.py                # Presidentクラス
+└── decorators.py               # デコレータ関数
+```
+
+これを1つのフォルダ（例: `employee_system`）にまとめておけば、
+`main.py` を実行するだけで全体が動作します。
+
+---
+
+## 🧩 2. 各ファイルの内容
+
+### 🧱 employee.py
+
+基底クラス `Employee` を定義します。
+
+```python
+# employee.py
+
+class Employee:
+    """社員の基底クラス"""
+    
+    def __init__(self):
+        self._name = ""
+        self._salary = 0
+
+    def get_name(self):
+        return self._name
+
+    def set_name(self, emp_name):
+        self._name = emp_name
+
+    def get_salary(self):
+        return self._salary
+
+    def set_salary(self, emp_salary):
+        self._salary = emp_salary
+
+    def __del__(self):
+        print(f"[デストラクタ] Employeeインスタンス '{self._name}' が削除されました")
+```
+
+---
+
+### 👨‍💼 staff.py
+
+`Employee` を継承した `Staff` クラスを定義します。
+
+```python
+# staff.py
+from employee import Employee
+
+class Staff(Employee):
+    """一般社員クラス"""
+
+    def __init__(self):
+        super().__init__()
+        self._division = ""
+
+    def get_division(self):
+        return self._division
+
+    def set_division(self, emp_division):
+        self._division = emp_division
+
+    def __del__(self):
+        print(f"[デストラクタ] Staffインスタンス '{self._name}' が削除されました")
+```
+
+---
+
+### 👑 president.py
+
+社長クラス `President`。
+`Employee` を継承し、`Company` クラス（後でインポート）と連携します。
+
+```python
+# president.py
+from employee import Employee
+
+class President(Employee):
+    """社長クラス"""
+
+    def __init__(self, company):
+        super().__init__()
+        self._company = company
+
+    def get_name(self):
+        return self._name + "社長"
+
+    def dismiss(self, name):
+        self._company._staffs = [
+            s for s in self._company._staffs if s.get_name() != name
+        ]
+        print(f"[解雇通知] {name}さんを解雇しました")
+
+    def __del__(self):
+        print(f"[デストラクタ] Presidentインスタンス '{self._name}' が削除されました")
+```
+
+---
+
+### 🧩 decorators.py
+
+デコレータ関数を別ファイルに切り出します。
+
+```python
+# decorators.py
+from functools import wraps
+
+def print_employee_count(func):
+    """社員数を表示するデコレータ"""
+    @wraps(func)
+    def wrapper(self, *args, **kwargs):
+        result = func(self, *args, **kwargs)
+        total = len(self._staffs) + 1  # 社員数 + 社長
+        print(f"現在わが社の社員数は{total}人になっています")
+        return result
+    return wrapper
+```
+
+---
+
+### 🏢 company.py
+
+会社クラス。`Staff` や `President` を利用します。
+
+```python
+# company.py
+from typing import List
+from staff import Staff
+from president import President
+from decorators import print_employee_count
+
+class Company:
+    """会社クラス"""
+
+    def __init__(self):
+        self._staffs: List[Staff] = []
+        self._ceo: President = President(self)
+
+    @property
+    def staffs(self):
+        return self._staffs
+
+    @property
+    def ceo(self):
+        return self._ceo
+
+    @print_employee_count
+    def set_dismissal_procedure(self, name):
+        self._staffs = [s for s in self._staffs if s.get_name() != name]
+        print(f"[解雇手続き完了] {name}さんの解雇手続きが完了しました")
+
+    def __del__(self):
+        print("[デストラクタ] Companyインスタンスが削除されました")
+```
+
+---
+
+### 🚀 main.py
+
+プログラムのエントリーポイントです。
+他のクラスをインポートして動作確認を行います。
+
+```python
+# main.py
+from company import Company
+from staff import Staff
+
+def main():
+    print("=" * 60)
+    print("社員管理システム テスト開始")
+    print("=" * 60)
+    print()
+
+    company = Company()
+
+    # 社員登録
+    staff1 = Staff()
+    staff1.set_name("佐藤太郎")
+    staff1.set_salary(200000)
+    staff1.set_division("営業部")
+    company.staffs.append(staff1)
+
+    staff2 = Staff()
+    staff2.set_name("鈴木次郎")
+    staff2.set_salary(300000)
+    staff2.set_division("開発部")
+    company.staffs.append(staff2)
+
+    # 社長
+    company.ceo.set_name("偉井杉人")
+    company.ceo.set_salary(2500000)
+
+    print("【社員一覧】")
+    for s in company.staffs:
+        print(f"名前：{s.get_name()}、給料：{s.get_salary()}円、所属：{s.get_division()}")
+    print()
+    print("【社長】")
+    print(f"名前：{company.ceo.get_name()}、給料：{company.ceo.get_salary()}円")
+    print()
+
+    # 社長による解雇
+    print("【社長によるdismissメソッドテスト】")
+    company.ceo.dismiss("佐藤太郎")
+    print()
+
+    # 再雇用
+    staff3 = Staff()
+    staff3.set_name("佐藤太郎")
+    staff3.set_salary(200000)
+    staff3.set_division("営業部")
+    company.staffs.append(staff3)
+
+    # デコレータ付き解雇手続き
+    print("【デコレータ付きset_dismissal_procedureメソッドテスト】")
+    company.set_dismissal_procedure("鈴木次郎")
+    print()
+
+    print("【最終社員一覧】")
+    for s in company.staffs:
+        print(f"名前：{s.get_name()}、所属：{s.get_division()}")
+
+    print(f"社長：{company.ceo.get_name()}")
+    print("\n[プログラム終了 - デストラクタが呼ばれます]")
+
+
+if __name__ == "__main__":
+    main()
+```
+
+---
+
+## ⚙️ 3. 実行方法
+
+1. すべての `.py` ファイルを同じフォルダに保存
+   （フォルダ名：`employee_system` など）
+
+2. ターミナルまたはコマンドプロンプトでフォルダに移動：
+
+   ```bash
+   cd employee_system
+   ```
+
+3. メインを実行：
+
+   ```bash
+   python main.py
+   ```
+
+---
+
+## 🎯 4. 分割のメリット
+
+| 項目          | 説明                          |
+| ----------- | --------------------------- |
+| **可読性UP**   | 各クラスの責務が明確になる               |
+| **保守性UP**   | 変更箇所をすぐ特定できる                |
+| **再利用性UP**  | クラス単位で他プロジェクトでも流用可能         |
+| **チーム開発向き** | 役割分担（例: 社長機能担当・社員機能担当）がしやすい |
+
+---
+
+## 💡 次のステップ候補
+
+もしさらに発展させたいなら：
+
+1. `json` や `csv` で社員情報をファイル保存／読み込みできるようにする
+2. GUI（Tkinter / PyQt）で操作画面を作る
+3. 社員情報を検索・昇給・部署異動できる機能を追加する
+
+---
+
+希望があれば、
+👉「この分割版に**社員情報をCSVで保存する機能**を追加する」
+サンプルを続けて作ってみましょうか？
