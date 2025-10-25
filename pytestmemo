@@ -1,0 +1,264 @@
+いいですね！🎉
+新人エンジニア向けの **「pytestチートシート」** を、
+**1行ずつコメント付きで解説するQiita風まとめ** を作ります🧪🐍
+
+---
+
+# 🧪 Python入門：新人エンジニア向け pytest チートシート
+
+～ 1行ずつコメントで基礎を完全マスター！ ～
+
+---
+
+## 🎯 pytestとは？
+
+> pytest（パイテスト）は、
+> Pythonのテストを **シンプルに・自動で・わかりやすく** 実行できる便利なライブラリです。
+
+---
+
+## 📦 インストール
+
+```bash
+pip install pytest
+# pytestをインストール（初回のみ必要）
+```
+
+---
+
+## 📁 基本のフォルダ構成
+
+```
+my_project/
+├── app.py              # テストしたいコード
+└── tests/
+    └── test_app.py     # テストコード
+```
+
+💡 テストファイルは必ず `test_` で始める！
+pytestはそれを自動で見つけて実行します。
+
+---
+
+## 🧩 例：シンプルな関数（app.py）
+
+```python
+# app.py
+def add(a, b):
+    """2つの数を足して返す"""
+    return a + b
+
+def divide(a, b):
+    """0除算を防ぎながら割り算を行う"""
+    if b == 0:
+        raise ValueError("0では割り算できません")
+    return a / b
+```
+
+---
+
+## 🧪 基本テストコード（tests/test_app.py）
+
+```python
+# tests/test_app.py
+
+# ✅ 1. テスト対象をインポート
+from app import add, divide
+
+# ✅ 2. テスト関数は "test_" で始める
+def test_add():
+    # a=2, b=3 → 結果は5になるはず
+    result = add(2, 3)
+    # assert で結果を確認（違えばテスト失敗）
+    assert result == 5
+
+def test_divide_normal():
+    # 正常ケース（6 ÷ 2 = 3.0）
+    result = divide(6, 2)
+    assert result == 3.0
+
+def test_divide_zero():
+    # 0除算をテストする（エラー発生を確認）
+    import pytest  # pytestの例外テスト機能を使う
+    # with句で例外をキャッチ
+    with pytest.raises(ValueError):
+        divide(10, 0)
+```
+
+---
+
+## 💬 各行のコメント付き解説
+
+```python
+from app import add, divide
+# app.py から関数をインポートしてテスト対象にする
+```
+
+```python
+def test_add():
+# 関数名は "test_" で始める → pytestが自動で認識して実行する
+```
+
+```python
+result = add(2, 3)
+# 関数を呼び出して結果を変数に代入
+```
+
+```python
+assert result == 5
+# 期待値と結果を比較（TrueならOK、Falseなら失敗）
+```
+
+---
+
+```python
+with pytest.raises(ValueError):
+    divide(10, 0)
+# divide(10,0) で ValueError が発生することを確認
+# エラーが出なければテスト失敗
+```
+
+---
+
+## 🧰 pytest の便利なオプション一覧
+
+| コマンド                                 | 説明             |
+| ------------------------------------ | -------------- |
+| `pytest`                             | すべてのテストを実行     |
+| `pytest -v`                          | 詳細モード（テスト名を表示） |
+| `pytest -q`                          | 簡潔モード（結果のみ）    |
+| `pytest -x`                          | 最初に失敗した時点で止める  |
+| `pytest -k "キーワード"`                  | 特定のテストだけ実行     |
+| `pytest tests/test_app.py::test_add` | 特定の関数だけ実行      |
+| `pytest --maxfail=2`                 | 2回失敗したら中断      |
+| `pytest --disable-warnings`          | 警告を非表示         |
+
+---
+
+## 🧩 pytest fixture（共通データ）
+
+複数のテストで共通の前処理を使いたいとき👇
+
+```python
+import pytest
+
+@pytest.fixture
+def sample_data():
+    """共通データをセットアップ"""
+    return {"name": "Alice", "age": 25}
+
+def test_sample_data(sample_data):
+    # fixtureを引数で受け取るだけで使える
+    assert sample_data["name"] == "Alice"
+    assert sample_data["age"] == 25
+```
+
+💡 fixtureを使うと、前処理コードを共通化できる！
+
+---
+
+## 🧩 出力確認（print結果をテスト）
+
+```python
+def greet(name):
+    print(f"Hello, {name}!")
+
+def test_greet(capsys):
+    greet("Mika")
+    # capsysでprintの出力をキャプチャ
+    captured = capsys.readouterr()
+    assert "Hello, Mika!" in captured.out
+```
+
+📘 `capsys` はpytestが自動で提供する便利フィクスチャ。
+print出力をチェックできる。
+
+---
+
+## 🧩 クラス単位でまとめる
+
+```python
+class TestMath:
+    """グループ化したいときに便利"""
+
+    def test_add(self):
+        assert add(1, 2) == 3
+
+    def test_divide(self):
+        assert divide(6, 2) == 3
+```
+
+💡 クラス名は `Test` で始めるルール。
+メソッドごとにテストを分けると整理しやすい。
+
+---
+
+## 🧩 パラメータ化テスト（同じ関数で複数ケース）
+
+```python
+import pytest
+
+@pytest.mark.parametrize("a, b, expected", [
+    (1, 2, 3),
+    (3, 5, 8),
+    (-1, 1, 0),
+])
+def test_add_param(a, b, expected):
+    assert add(a, b) == expected
+```
+
+📘 これで1つの関数に複数ケースをまとめて実行できる！
+
+---
+
+## 💡 pytest の失敗時出力例
+
+```
+>       assert result == 4
+E       assert 5 == 4
+E        +  どこが違うか表示される
+```
+
+pytestはエラー箇所を自動でわかりやすく表示してくれる✨
+
+---
+
+## 🚀 実行方法まとめ
+
+```bash
+pytest -v          # 詳細表示
+pytest tests/      # testsフォルダ以下を全部実行
+pytest -k "divide" # divideを含むテストのみ実行
+pytest --maxfail=1 -v  # 最初の失敗で停止
+```
+
+---
+
+## 🎓 まとめ（チートシート要点）
+
+| 概念         | 書き方                              | 説明             |
+| ---------- | -------------------------------- | -------------- |
+| **テスト関数名** | `def test_～():`                  | pytestが認識して実行  |
+| **比較**     | `assert A == B`                  | 結果の一致確認        |
+| **例外テスト**  | `with pytest.raises(ErrorType):` | エラー発生確認        |
+| **出力テスト**  | `capsys.readouterr()`            | print出力を取得     |
+| **共通処理**   | `@pytest.fixture`                | テスト間で共有する準備処理  |
+| **パラメータ化** | `@pytest.mark.parametrize()`     | 同一テストを複数データで実行 |
+| **実行**     | `pytest -v`                      | 全テストを走らせる      |
+
+---
+
+## 🌸 次のステップ
+
+このチートシートでpytestの基本は完璧💪
+次は実務でよく使う応用へ進もう👇
+
+1. **fixtureでDB接続やAPIレスポンスをモック化**
+2. **GitHub Actionsで自動テスト**
+3. **pytest-covでカバレッジ（テスト率）を計測**
+
+---
+
+ご希望あれば次に
+👉「**pytest fixture 実務パターン集（新人向け）**」
+を同じように1行ずつコメント付きでまとめますか？
