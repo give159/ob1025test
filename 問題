@@ -1,0 +1,73 @@
+あなたはやさしい Python先生 くらす実装おしえて Emplyeeクラスを継承したstaffクラスとPresidentクラスを継承する get_name()は変数「name」を返却する
+get_name(emp_name:str)は変数nameに引数emp_nameを代入する
+get_salary（emp_salary:int）は変数salaryに引数emp_salaryを代入する
+get_devision()は変数divisionの値を返却する
+set_devision(emp_division:str)は変数divisionに引数emp_divisionを代入する
+
+Presidentクラスのget_nameはEmployeeクラスのget_name()をオーバーライドして変数nameの末尾に社長を加えた値を返却する
+
+またPresidentクラスは自身の所属するcompanyと同一のインスタンスをインスタンス変数として保持している
+Companyクラスを実装する
+
+参照可能staffsとceoはproprtyとして定義する
+
+インスタンス変数は可読性情報、適切名称
+各クラスは分けて実装
+
+
+Employeeクラス
+name:
+str
+salary:int
+get_name():str
+get_name(emp_name;str):Nonw
+get_salary();int
+set_salary(emp_salary:int):None
+
+
+Staffクラス
+division:str
+get division():str
+set_division(emp_division:str):None
+
+Companyクラス
+staffs:List[Staff]
+ceo:President
+staffs:List[Staff]
+
+
+Presidentクラス
+get_name():str
+
+
+実装したクラス利用main関数で以下しょり
+※各クラスファイルと別でテストファイル
+ＮＯ　名前　給料　所属division
+１　佐藤太郎　２０万　営業部
+２　鈴木次郎　３０万　開発部
+
+
+Companyクラスで定義したceoは以下値設定
+1 偉井杉人　２５０万
+
+
+ログで出力プリント形式
+名前：佐藤太郎、給料；２０万、所属：営業部
+
+
+
+
+テスト実装
+実装したクラスを使用してmain関数で以下処理
+テストファイルと各クラスファイルは別に実装
+
+
+ーーーーーーーーー
+■追加課題
+Ｄｏｃ出力；Docstringを書いた内容をＨＴＭＬ形式で出ｒｙク
+デストラクタ把握　各クラスにデストラクタ作成し、インスタンスタイミング確認
+メソッド追加実装　presidentにdismissメソッド実装　dissmissメソッドを呼び出したさい、引数に渡された名前に該当する所属社員削除処理の実装
+メソッドの追加実装
+Companyクラスにset_dismissal_procedureメソッド実装、呼び出したら引数に渡した名前該当社員削除して、現在社員数社長含むメソッド生成
+
+デコレータ作成　set_dissmissal_procedureメソッドに対して、このメソッド処置後現在わが社の社員スはｘｘ人になっているという文言プリントするデコレーター　ｘｘ人は社長ceoふくめる
