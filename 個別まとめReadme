@@ -1,0 +1,135 @@
+どのファイルをコピペするか、わかりやすく順番に説明しますね！📝
+
+## 🎯 コピペする順番とファイル
+
+全部で **10個のファイル** を作成します！
+
+---
+
+## 📦 ステップ1: クラスファイル（4個）
+
+### 1️⃣ employee.py
+```powershell
+notepad employee.py
+```
+👆 **上にスクロール**して、緑色のボックス「employee.py - Employeeクラス（分離版）」をコピペ
+
+### 2️⃣ staff.py
+```powershell
+notepad staff.py
+```
+👆 緑色のボックス「staff.py - Staffクラス（分離版）」をコピペ
+
+### 3️⃣ president.py
+```powershell
+notepad president.py
+```
+👆 緑色のボックス「president.py - Presidentクラス（分離版）」をコピペ
+
+### 4️⃣ company.py
+```powershell
+notepad company.py
+```
+👆 緑色のボックス「company.py - Companyクラス（分離版）」をコピペ
+
+---
+
+## 🧪 ステップ2: テストファイル（5個）
+
+### 5️⃣ test_employee.py
+```powershell
+notepad test_employee.py
+```
+👆 緑色のボックス「test_employee.py - Employeeクラス専用テスト」をコピペ
+
+### 6️⃣ test_staff.py
+```powershell
+notepad test_staff.py
+```
+👆 緑色のボックス「test_staff.py - Staffクラス専用テスト」をコピペ
+
+### 7️⃣ test_president.py
+```powershell
+notepad test_president.py
+```
+👆 緑色のボックス「test_president.py - Presidentクラス専用テスト」をコピペ
+
+### 8️⃣ test_company.py
+```powershell
+notepad test_company.py
+```
+👆 緑色のボックス「test_company.py - Companyクラス専用テスト」をコピペ
+
+### 9️⃣ test_integration.py
+```powershell
+notepad test_integration.py
+```
+👆 緑色のボックス「test_integration.py - 統合テスト」をコピペ
+
+---
+
+## 🚀 ステップ3: 実行スクリプト（1個）
+
+### 🔟 run_all_tests.py
+```powershell
+notepad run_all_tests.py
+```
+👆 緑色のボックス「run_all_tests.py - 全テスト実行スクリプト」をコピペ
+
+---
+
+## ✅ ステップ4: 確認
+
+```powershell
+# 10個のファイルがあるか確認
+dir *.py
+```
+
+以下が表示されればOK：
+```
+employee.py
+staff.py
+president.py
+company.py
+test_employee.py
+test_staff.py
+test_president.py
+test_company.py
+test_integration.py
+run_all_tests.py
+```
+
+---
+
+## 🎮 ステップ5: 実行！
+
+### 個別にテスト
+```powershell
+python test_employee.py
+```
+
+### 全部まとめてテスト
+```powershell
+python run_all_tests.py
+```
+
+---
+
+## 📊 どれから始めればいい？
+
+**おすすめの順番：**
+
+1. まず **クラスファイル4個**（employee, staff, president, company）
+2. 次に **run_all_tests.py** を作成
+3. 残りの**テストファイル5個**を作成
+4. `python run_all_tests.py` で実行！
+
+---
+
+## 💡 もっと簡単な方法
+
+もし「1個ずつは大変」という場合は、最初に作った
+**employee_system_all_in_one.py**（統合版）と
+**test_import_main.py** の2つだけでもテストできますよ！
+
+どの方法で進めますか？😊
